@@ -1,0 +1,33 @@
+.popover-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  &-title {
+    font-size: 14px;
+    color: #000;
+    line-height: 20px;
+    padding: 0 10px;
+  }
+  &-content {
+    font-size: 14px;
+    color: #999;
+    line-height: 20px;
+    padding: 0 10px;
+    cursor: pointer;
+  }
+}
+
+.popover-list {
+  display: flex;
+  justify-content: center;
+}
+
+.popover-group {
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+  gap: 12px;
+}

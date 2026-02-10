@@ -1,0 +1,27 @@
+:root {
+	--app-page-header-bg: #18223d;
+	--app-page-header-height: 50px;
+	--app-page-slider-bg: #28355f;
+	--app-menu-item-hover-bg: rgba(255, 255, 255, 0.12);
+	--app-menu-item-sub-open-bg: rgba(255, 255, 255, 0.04);
+	--app-menu-item-sub-opne-title-bg: rgba(255, 255, 255, 0.2);
+	--app-menu-item-bg: transparent;
+	--app-menu-active-label-color: #fff;
+	--app-menu-active-color: #fff;
+	--app-menu-font-size: 14px;
+	--app-page-slider-max-width: 170px;
+	--app-page-slider-min-width: 64px;
+	--app-menu-item-height: 44px;
+	--app-menu-bg: transparent;
+	--app-page-toolbar-height: 44px;
+	--app-logo-color: #ffffff;
+	--app-main-bg: #f5f8ff;
+	--app-card-color: #ffffff;
+	--el-table-col: rgba(0,0,0,0.06);
+	--el-table-header-color: rgba(0,0,0,0.85);
+	--el-table-body-color: rgba(0,0,0,0.65);
+	--el-border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark:root {
+}

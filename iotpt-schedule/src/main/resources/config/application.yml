@@ -1,0 +1,15 @@
+#设置端口
+server:
+  port: 7075
+  tomcat:
+    port-header: HEAD,PUT,DELETE,OPTIONS,TRACE,COPY,SEARCH,PROPFIND
+
+spring:
+  application:
+    name: schedule
+  profiles:
+    active: prd
+    include: kafka
+linkmqtt:
+  #ip: http://127.0.0.1:8086
+  ip: http://172.168.80.6:7000

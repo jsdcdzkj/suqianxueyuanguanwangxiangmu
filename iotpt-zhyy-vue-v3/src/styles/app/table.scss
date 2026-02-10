@@ -1,0 +1,22 @@
+.custom-table {
+	background: var(--app-card-color);
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.el-table .warning-row {
+	--el-table-tr-bg-color: var(--el-table-col);
+}
+.el-table .success-row {
+	--el-table-tr-bg-color: var(--el-table-row-scuccess);
+}
+
+.el-table th.el-table__cell {
+	background-color: var(--el-table-col) !important;
+}
+.el-table td.el-table__cell {
+	color: var(--el-table-body-color);
+}
+.el-table th.el-table__cell {
+	color: var(--el-table-header-color);
+}

@@ -1,0 +1,203 @@
+body {
+	font-family:
+		Inter, system-ui, Avenir, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+		"微软雅黑", Arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	margin: 0;
+}
+* {
+	box-sizing: border-box;
+}
+
+.am {
+	transition: width linear 300ms;
+}
+
+a {
+	color: var(--el-color-primary);
+}
+
+code {
+	border-radius: 2px;
+	padding: 2px 4px;
+	background-color: var(--el-color-primary-light-9);
+	color: var(--el-color-primary);
+}
+#app {
+	height: 100vh;
+	overflow: hidden;
+}
+#nprogress {
+	pointer-events: none;
+}
+
+#nprogress .bar {
+	background: rgb(13, 148, 136);
+	opacity: 0.75;
+	position: fixed;
+	z-index: 1031;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 2px;
+}
+
+.base-search {
+	background: var(--app-card-color);
+	border-radius: 8px 8px 8px 8px;
+	border: 1px solid rgba(0, 0, 0, 0.06);
+	padding: 20px 20px 0;
+}
+.base-search .base-form {
+	padding-bottom: 4px;
+}
+.base-search .base-form.notMargn {
+	padding-bottom: 20px;
+}
+.el-upload-list__item {
+	height: 40px;
+	line-height: 40px;
+	background: var(--el-body-bg);
+	border-radius: 4px 4px 4px 4px;
+}
+
+.custom-descri {
+	.el-descriptions__label {
+		width: 100px;
+		display: inline-block;
+	}
+	.el-descriptions__cell {
+		display: flex;
+	}
+	.el-descriptions__content {
+		font-weight: bold;
+	}
+}
+
+.custom-descri2 {
+	.el-descriptions__label {
+		width: 140px;
+		display: inline-block;
+	}
+	.el-descriptions__content {
+		font-weight: bold;
+	}
+}
+
+.ccc {
+	.is-bordered-label {
+		width: 200px;
+	}
+}
+
+// 富文本的图片宽度
+.desc-img {
+	img {
+		max-width: 100%;
+	}
+}
+
+.custom-table-tr {
+	tr {
+		cursor: pointer;
+	}
+}
+
+// .progress-list-scroller {
+// 	scroll-behavior: smooth;
+
+// 	&::-webkit-scrollbar {
+// 		display: none;
+// 	}
+
+// 	-ms-overflow-style: none;
+
+// 	scrollbar-width: none;
+// }
+
+/* 滚动条整体样式 */
+::-webkit-scrollbar {
+	width: 8px; /* 垂直滚动条宽度 */
+	height: 8px; /* 水平滚动条高度 */
+}
+
+/* 滚动条轨道 */
+::-webkit-scrollbar-track {
+	background: #f1f1f1;
+	border-radius: 4px;
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.06);
+	border-radius: 4px;
+}
+
+/* 滚动条滑块悬停状态 */
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(0, 0, 0, 0.16);
+}
+
+.custom-radio-group {
+	.el-radio-button__inner {
+		width: 100%;
+	}
+}
+
+// @import url(../../pages/modules/resources/map/mark.scss);
+
+.module-title {
+	width: 100%;
+	height: 24px;
+	line-height: 24px;
+	background: linear-gradient(90deg, rgba(27, 134, 255, 0.1) 0%, rgba(27, 134, 255, 0) 100%);
+	border-radius: 0px 0px 0px 0px;
+	border-left: 4px solid #1b86ff;
+	font-size: 16px;
+	font-weight: bold;
+	padding-left: 10px;
+}
+
+.el-form {
+	.el-row {
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+	}
+}
+
+.hide-scrollbar {
+	/* 保持滚动功能 */
+	overflow-y: auto !important;
+	/* 隐藏滚动条 */
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Webkit 内核浏览器（Chrome, Safari） */
+.hide-scrollbar::-webkit-scrollbar {
+	display: none;
+	width: 0;
+	height: 0;
+}
+
+// 标题头部样式
+.common-title {
+	position: relative;
+	&::before {
+		content: "";
+		position: absolute;
+		left: -16px;
+		top: 0;
+		width: 4px;
+		height: 24px;
+		margin-right:4px;
+		background: #345BAD;
+		border-radius: 0px 0px 0px 0px;
+	}
+}
+
+.el-scrollbar {
+	background:#fff;
+}
+

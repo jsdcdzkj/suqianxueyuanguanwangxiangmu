@@ -1,0 +1,14 @@
+@forward "element-plus/theme-chalk/src/common/var.scss" with (
+	$colors: (
+		"primary": (
+			"base": #1a5c46,
+			// 修改为你想要的颜色
+		),
+		"success": (
+			"base": #337ecc
+		)
+	)
+);
+
+// 然后导入 Element Plus 的样式文件
+@use "element-plus/theme-chalk/src/index.scss" as *;

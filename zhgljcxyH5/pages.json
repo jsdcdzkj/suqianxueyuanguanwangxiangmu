@@ -1,0 +1,60 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^u-(.*)": "vk-uview-ui/components/u-$1/u-$1.vue",
+			"^c-(.*)": "@/components/c-$1.vue"
+		}
+	},
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页"
+			}
+		},
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录"
+			}
+		},
+		{
+			"path": "pages/usercenter/index",
+			"style": {
+				"navigationBarTitleText": "个人中心"
+			}
+		}
+	],
+	"subPackages": [{
+		"root": "pagesOther",
+		"name": "pagesOther",
+		"pages": [{
+				"path": "repair/index",
+				"style": {
+					"navigationBarTitleText": "报事报修"
+				}
+			},
+			{
+				"path": "map/index",
+				"style": {
+					"navigationBarTitleText": "地图定位"
+				}
+			},
+			{
+				"path": "waterConsumption/index",
+				"style": {
+					"navigationBarTitleText": "用水查询"
+				}
+			}
+		]
+	}],
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "综合管网监测系统",
+		"navigationBarBackgroundColor": "#4378E7",
+		"backgroundColor": "#ffffff",
+		"navigationStyle": "custom"
+	},
+	"uniIdRouter": {}
+}

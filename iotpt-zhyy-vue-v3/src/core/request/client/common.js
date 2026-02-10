@@ -1,0 +1,1 @@
+var a=(t=>(t.GET="GET",t.DELETE="DELETE",t.POST="POST",t.PUT="PUT",t))(a||{});const e=1e3,p={"Content-Type":"application/json;charset=utf-8"};var o=(n=>(n.JSON="application/json;charset=utf-8",n.FORMDATA="multipart/form-data",n))(o||{});export{a as METHOD,e as TIME_OUT,p as HEADERS,o as HEADER_TYPES};

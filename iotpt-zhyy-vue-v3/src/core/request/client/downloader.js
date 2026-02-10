@@ -1,0 +1,1 @@
+class s{client;constructor(e){this.client=e}download(e,t){const o={...t,responseType:"blob"};return this.client.get(e,o)}downloadFile(e,t){const o=document.createElement("a"),n=URL.createObjectURL(e);o.href=n,o.download=t,o.click(),URL.revokeObjectURL(n)}}export{s as DownloaderManger};

@@ -1,0 +1,1 @@
+export const clientResponseInterceptor=n=>n,clientRequestInterceptor=n=>n;export class InterceptorManager{instance;constructor(e){this.instance=e}addRequestInterceptor(e,t){this.instance.interceptors.request.use(e,t)}addResponseInterceptor(e,t){this.instance.interceptors.response.use(e,t)}}

@@ -1,0 +1,37 @@
+.page-layout {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+	padding: 12px;
+}
+
+.page-layout__header {
+	flex-shrink: 0;
+	padding: 12px;
+	background-color: #fff;
+	box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08); /* 轻微阴影增加层次感 */
+	display: flex;
+	align-items: center;
+	z-index: 10; /* 确保头部在侧边栏之上 */
+}
+
+.page-layout__body {
+	flex: 1;
+	display: flex;
+	overflow: hidden; /* 防止双滚动条 */
+	gap: 12px;
+}
+
+.page-layout__aside {
+	flex-shrink: 0;
+	background-color: #fff;
+	overflow-y: auto;
+	/* 移除border，改用gap控制间距 */
+}
+
+.page-layout__main {
+	flex: 1;
+	overflow-y: auto;
+	background-color: #fff;
+}

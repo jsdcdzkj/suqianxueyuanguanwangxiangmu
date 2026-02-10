@@ -1,0 +1,24 @@
+@font-face {
+    font-family: "fzht";
+    src: url('./fzht.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Digital";
+    src: url('./DS-Digital.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: "AgencyFB";
+    src: url('./agencyfb-regular.eot');
+    src: url('./agencyfb-regular.eot') format('embedded-opentype'),
+       url('./agencyfb-regular.woff2') format('woff2'),
+       url('./agencyfb-regular.woff') format('woff'),
+       url('./agencyfb-regular.ttf') format('truetype'),
+       url('./agencyfb-regular.svg') format('svg');
+    /* src: url('./AgencyFB-Regular.otf'); */
+    font-weight: normal;
+    font-style: normal;
+}

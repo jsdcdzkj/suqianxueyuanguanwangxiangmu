@@ -1,0 +1,189 @@
+systemName: '园区物联网管控平台'
+spring:
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 300MB
+      max-request-size: 300MB
+
+  influx:
+    # 数据库访问路径
+    url: http://172.168.95.40:8888
+    # 用户名
+    user: 1111
+    # 密码
+    password: 1111
+    # 数据库名称
+    database: jsdcdata
+
+  datasource:
+    url: jdbc:oracle:thin:@//172.168.95.9:1521/orcl
+    username: IOTPT_SQXYGW
+    password: rjGS@2016
+    # driver-class需要注意mysql驱动的版本(com.mysql.cj.jdbc.Driver 或 com.mysql.jdbc.Driver)
+    driver-class-name: oracle.jdbc.driver.OracleDriver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      # 初始化时建立物理连接的个数
+      initial-size: 10
+      # 连接池的最小空闲数量
+      min-idle: 10
+      # 连接池最大连接数量
+      max-active: 20
+      # 获取连接时最大等待时间，单位毫秒
+      max-wait: 60000
+      # 申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。
+      test-while-idle: true
+      # 既作为检测的间隔时间又作为testWhileIdel执行的依据
+      time-between-eviction-runs-millis: 60000
+      # 销毁线程时检测当前连接的最后活动时间和当前时间差大于该值时，关闭当前连接(配置连接在池中的最小生存时间)
+      min-evictable-idle-time-millis: 30000
+      # 用来检测数据库连接是否有效的sql 必须是一个查询语句(oracle中为 select 1 from dual)
+      validation-query: select 1 from dual
+      # 申请连接时会执行validationQuery检测连接是否有效,开启会降低性能,默认为true
+      test-on-borrow: true
+      # 归还连接时会执行validationQuery检测连接是否有效,开启会降低性能,默认为true
+      test-on-return: false
+      # 是否缓存preparedStatement, 也就是PSCache,PSCache对支持游标的数据库性能提升巨大，比如说oracle,在mysql下建议关闭。
+      pool-prepared-statements: false
+      # 置监控统计拦截的filters，去掉后监控界面sql无法统计，stat: 监控统计、Slf4j:日志记录、waLL: 防御sqL注入
+      filters: stat,wall,slf4j
+      # 要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+      max-pool-prepared-statement-per-connection-size: -1
+      # 合并多个DruidDataSource的监控数据
+      use-global-data-source-stat: true
+      # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
+      connect-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      # 开启filters的stat监控统计插件，下边进行添加监控配置
+      web-stat-filter:
+        # 是否启用StatFilter默认值true
+        enabled: true
+        # 添加过滤规则
+        url-pattern: /*
+        # 忽略过滤的格式
+        exclusions: /druid/*,*.js,*.gif,*.jpg,*.png,*.css,*.ico
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        # 是否能够重置数据
+        reset-enable: false
+        # 需要账号密码才能访问控制台，默认为root
+        login-username: xujian
+        login-password: 123456
+        # IP白名单
+        allow: 192.168.111.10
+        # IP黑名单（共同存在时，deny优先于allow）
+        deny:
+  mail:
+    # 配置 SMTP 服务器地址
+    host: smtp.qq.com
+    # 发送者邮箱，已开通POP3/SMTP服务的邮箱，也就是你自己的
+    username: 1004185933@qq.com
+    # 配置密码，注意不是真正的密码，而是刚刚申请到的授权码
+    password: vpvfeiiwxzhfbcig
+    # 邮件接收者
+    mailRecipient: 1004185933@qq.com
+    # 端口号465或587（QQ邮箱发送邮件仅支持587端口协议）
+    port: 587
+    # 默认的邮件编码为UTF-8
+    default-encoding: UTF-8
+    # 配置SSL 加密工厂
+    properties:
+      mail:
+        smtp:
+          socketFactoryClass: javax.net.ssl.SSLSocketFactory
+        #表示开启 DEBUG 模式，这样，邮件发送过程的日志会在控制台打印出来，方便排查错误
+        debug: true
+
+
+
+
+  #redis配置
+  redis:
+    database: 0
+    host: 172.168.95.40
+    password: jsdc@2024
+    port: 6379
+    jedis:
+      pool:
+        max-idle: 100
+        min-idle: 1
+        max-active: 1000
+        max-wait: -1
+    timeout: 10000
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+mybatis-plus:
+  global-config:
+    #主键类型  0:"数据库ID自增", 1:"用户输入ID",2:"全局唯一ID (数字类型唯一ID)", 3:"全局唯一ID UUID";
+    id-type: 0
+    #字段策略
+    field-strategy: 1
+    #刷新mapper 调试神器
+    refresh-mapper: true
+    #数据库大写下划线转换
+    capital-mode: true
+    # Sequence序列接口实现类配置
+    key-generator: com.baomidou.mybatisplus.incrementer.OracleKeyGenerator
+  configuration:
+    map-underscore-to-camel-case: false
+    cache-enabled: true
+    #控制台打印SQL
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+  mybatis:
+    configuration:
+      map-underscore-to-camel-case: false
+logging:
+  level:
+    org.springframework.jdbc.core.JdbcTemplate: debug
+    root: info
+    com.jsdc: debug
+  config: classpath:config/logback-spring.xml
+jsdc:
+  uploadPath: C:/upload
+  nginxPath: http://172.168.95.40:18020/
+  nginxInnerPath: http://172.168.95.40:18020/
+
+aliSMS:
+  # 测试时需要修改
+  url: http://172.168.95.23:8081
+# 文件系统
+minio:
+  url: http://172.168.95.30:19010
+  access-key: admin
+  secret-key: admin123
+#人员布控设备IP
+deviceIp: 192.168.0.166
+linkmqtt:
+  #ip: http://127.0.0.1:8086
+  ip: http://172.168.80.6:7000
+
+#sa-token和redis配置
+chintCloud:
+  url: http://172.168.80.107
+  loginName: user
+  password: 123456
+  projectId: 6cde3be55fb0486283721ce2790d9cf0
+wx:
+  cn: https://smartpark.dincher.cn/wul/web/app
+dingchi:
+  #大华接口不能返回域名 只能返回ip要用指定域名替换 。flv格式流
+  newUrl: wss://smartpark.dincher.cn/dahuaVideo
+  oldUrl: ws://172.168.80.2:7886
+jobAddress: 172.168.80.4 #只能一个服务进行定时队列执行
+dcDify:
+  url: http://172.168.100.6/v1/chat-messages

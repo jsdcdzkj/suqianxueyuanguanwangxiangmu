@@ -1,0 +1,40 @@
+.my-label {
+  width: 95px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  text-align: right !important;
+}
+
+.my-content {
+  // width: 35px;
+  // white-space: nowrap;
+  // text-overflow: ellipsis;
+  // overflow: hidden;
+}
+
+.descriptions-self .el-descriptions__table {
+    table-layout:fixed !important;
+}
+
+.vue-treeselect__control {
+  height: 32px !important;
+  line-height:  32px !important;
+  border-radius: 4px !important;
+  display: block !important;
+}
+.title-manager-view {
+  .el-tabs__content{
+    height: calc(100vh - 340px) !important;
+  }
+}
+.tabs-self-top {
+  position: absolute;width: 371px;z-index: 1;
+}
+
+.tabs-self-top .jv-container .jv-code.boxed {
+  height: calc(100vh -  534px) !important;
+}
+.router-link-active{
+  letter-spacing: 3px;
+}

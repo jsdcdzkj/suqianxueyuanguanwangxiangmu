@@ -1,0 +1,1 @@
+class l{client;constructor(e){this.client=e}upload(e,n,t){const i=new FormData;Object.entries(n).forEach(([r,s])=>{r=="files"?s.forEach(a=>i.append(t?.uploadFileName||"file",a)):i.append(r,s)});const o={...t,headers:{"Content-Type":"multipart/form-data",...t?.headers}};return this.client.post(e,i,o)}}export{l as UploaderManager};

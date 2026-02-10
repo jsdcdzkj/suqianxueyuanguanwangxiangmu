@@ -1,0 +1,18 @@
+.base-form {
+	// background: var(--el-page-color);
+	// box-shadow: 0px 0px 12px 0px var(--el-body-shandow);
+	// border-radius: 8px 8px 8px 8px;
+	// border: 1px solid #0000000f;
+	// padding: 10px;
+	// margin-bottom: 10px;
+	.el-row {
+		// row-gap: 10px;
+	}
+	.el-form-item__content {
+		line-height: inherit;
+	}
+}
+
+.notMargn .el-form-item {
+	margin-bottom: 0;
+}
