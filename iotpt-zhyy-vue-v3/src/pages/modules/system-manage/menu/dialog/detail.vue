@@ -19,7 +19,7 @@
 			<ElCol :span="8">
 				<!-- 所属系统 -->
 				<ElFormItem label="所属系统" prop="systemId">
-					<ElSelect v-model="form.systemId" placeholder="请选择所属系统">
+					<ElSelect v-model="form.systemId" placeholder="请选择所属系统" @change="handleSystemChange">
 						<template v-for="option in systemOptions" :key="option.value">
 							<ElOption :label="option.label" :value="`${option.value}`"></ElOption>
 						</template>
@@ -44,8 +44,8 @@
 			</ElCol>
 			<ElCol :span="8">
 				<!-- 路由名称 -->
-				<ElFormItem label="路由名称" prop="routerUrl">
-					<ElInput v-model="form.routerUrl" placeholder="请输入路由名称" />
+				<ElFormItem label="路由名称" prop="routerName">
+					<ElInput v-model="form.routerName" placeholder="请输入路由名称" />
 				</ElFormItem>
 			</ElCol>
 			<ElCol :span="8">
@@ -68,7 +68,7 @@
 			</ElCol>
 			<ElCol :span="8">
 				<!-- 图标 -->
-				<ElFormItem label="图标" prop="icon" v-if="form.menuType == 1">
+				<ElFormItem label="图标" v-if="form.menuType == 1">
 					<IconSelect v-model:model-value="form.icon" />
 				</ElFormItem>
 			</ElCol>
@@ -76,16 +76,6 @@
 				<!-- 排序 -->
 				<ElFormItem label="排序" prop="sort">
 					<ElInput v-model="form.sort" placeholder="请输入排序" />
-				</ElFormItem>
-			</ElCol>
-			<ElCol :span="8">
-				<!-- 是否显示 0：显示 1：不显示 -->
-				<ElFormItem label="是否显示" prop="isFlag">
-					<!-- 使用radio -->
-					<ElRadioGroup v-model="form.isFlag">
-						<ElRadioButton :value="0">显示</ElRadioButton>
-						<ElRadioButton :value="1">隐藏</ElRadioButton>
-					</ElRadioGroup>
 				</ElFormItem>
 			</ElCol>
 		</ElRow>
@@ -111,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-	import { ref, onMounted, reactive } from "vue";
+	import { ref, onMounted, reactive, computed, watch } from "vue";
 	import { useDialogForm } from "@/core/dialog/dialog-container";
 	import {
 		ElForm,
@@ -131,12 +121,25 @@
 	import { toRaw } from "vue";
 	import { getMenuTree, saveMenu } from "@/api/setting/menu";
 	import IconSelect from "@/components/icon/IconSelect";
-
+	const props = defineProps({
+		// id: number().def()
+		rowInfo: {
+			type: Object,
+			default: () => ({})
+		},
+		systemOptions: {
+			type: Array,
+			default: () => []
+		},
+		systemId: {
+			type: String,
+			default: ""
+		}
+	});
 	const form = reactive({
 		parentId: "",
 		menuType: "1",
-		systemId: "1",
-		parentId: "",
+		systemId: "",
 		icon: "",
 		title: "",
 		sort: "",
@@ -144,27 +147,44 @@
 		routerUrl: "",
 		vueUrl: "",
 		redirectType: "",
-		menuCode: "",
-		isFlag: 0,
-		status: 0,
-		isCache: 0
+		menuCode: ""
 	});
 	const menuTypeOptions = [
 		{ label: "菜单", value: 1 },
 		{ label: "按钮", value: 2 }
 	];
-	const systemOptions = [
-		{ label: "系统1", value: 1 },
-		{ label: "系统2", value: 2 }
-	];
-
-	const props = defineProps({
-		// id: number().def()
-		rowInfo: {
-			type: Object,
-			default: () => ({})
+	// 在组件创建时设置初始值
+	if (props.systemId) {
+		form.systemId = props.systemId;
+	}
+	const handleSystemChange = async (value: string) => {
+		if (value) {
+			try {
+				const res = await getMenuTree({
+					systemId: value
+				});
+				treeData.value = res;
+			} catch (error) {
+				console.error("获取菜单树失败:", error);
+				treeData.value = [];
+			}
+		} else {
+			treeData.value = [];
 		}
-	});
+	};
+
+	// 监听systemId的变化
+	watch(
+		() => props.systemId,
+		async (newVal) => {
+			if (newVal) {
+				await handleSystemChange(newVal);
+			}
+		},
+		{ immediate: true }
+	);
+
+	const systemOptions = computed(() => props.systemOptions);
 
 	const rules = reactive({
 		menuType: [
@@ -215,20 +235,6 @@
 				message: "请输入菜单路径",
 				trigger: "blur"
 			}
-		],
-		menuCode: [
-			{
-				required: true,
-				message: "请输入权限标识",
-				trigger: "blur"
-			}
-		],
-		isFlag: [
-			{
-				required: true,
-				message: "请选择状态",
-				trigger: "blur"
-			}
 		]
 	});
 
@@ -258,29 +264,40 @@
 		return false;
 	};
 	if (props.rowInfo.id) {
-		for (const key in form) {
-			// 修改部分
-			if (key in form && key in props.rowInfo) {
-				if (key === "parentId" && props.rowInfo[key] === "-1") {
-					// 若 key 是 parentId 且值为 "-1"，则不赋值
-					continue;
-				}
-				form[key] = props.rowInfo[key];
-			}
+		// 先设置基本信息
+		Object.assign(form, {
+			...props.rowInfo,
+			menuType: String(props.rowInfo.menuType),
+			systemId: String(props.rowInfo.systemId)
+		});
+
+		// 根据菜单类型处理特定字段
+		if (form.menuType === "2") {
+			form.routerUrl = "";
+			form.vueUrl = "";
+			form.redirectType = "";
+			form.icon = "";
 		}
-	} else if (props.rowInfo.parentId && props.rowInfo.parentId != "-1") {
-		form.parentId = props.rowInfo.parentId;
+
+		// 等待菜单树加载完成后再设置parentId
+		watch(
+			() => treeData.value,
+			(newVal) => {
+				if (newVal.length > 0) {
+					form.parentId = props.rowInfo.parentId === "0" ? "" : props.rowInfo.parentId;
+				}
+			},
+			{ once: true }
+		);
 	}
-	onMounted(async () => {
-		const res = await getMenuTree({});
-		treeData.value = res;
-	});
-	// registerFormDone(async () => {
-	// 	await saveMenu(Object.assign({}, toRaw(form), props.rowInfo ? { id: props.rowInfo.id } : {}));
-	// 	return true;
-	// });
+
 	registerFormDone(async () => {
 		let submitData = { ...toRaw(form) };
+
+		// 只在新增时设置isShow默认值
+		if (!props.rowInfo.id) {
+			submitData.isShow = 1;
+		}
 
 		if (submitData.menuType === 1) {
 			// 当菜单类型为 1（菜单）时，清除按钮标识
@@ -292,13 +309,11 @@
 				submitData[field] = "";
 			});
 		}
-		console.log("9999999999999submitData", submitData);
-		submitData = {
-			...submitData,
-			parentId: submitData.parentId ? submitData.parentId : "-1",
-			id: props.rowInfo.id
-		};
-		submitData.parentId = submitData.parentId;
+
+		// 如果是编辑模式，添加id
+		if (props.rowInfo.id) {
+			submitData.id = props.rowInfo.id;
+		}
 
 		await saveMenu(submitData);
 		return true;

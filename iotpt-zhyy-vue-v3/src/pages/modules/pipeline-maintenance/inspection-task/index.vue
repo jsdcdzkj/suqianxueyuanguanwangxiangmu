@@ -224,8 +224,8 @@
 	i {
 		display: inline-block;
 		margin-right: 6px;
-		width: 10px;
-		height: 10px;
+		width: 12px;
+		height: 12px;
 		border-radius: 50%;
 		&.warning {
 			background: #e6a23c;

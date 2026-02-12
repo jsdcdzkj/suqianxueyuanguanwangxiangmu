@@ -2,20 +2,20 @@
 	<div>
 		<div class="base-title">上报信息</div>
 		<ElDescriptions :column="2" border label-width="120px">
-			<ElDescriptionsItem label="标题" label-class-name="my-label">{{ detail.title || "--" }}</ElDescriptionsItem>
-			<ElDescriptionsItem label="来源" label-class-name="my-label">{{ detail.sourceName || "--" }}</ElDescriptionsItem>
-			<ElDescriptionsItem label="严重程度" label-class-name="my-label">{{ detail.levelsName || "--" }}</ElDescriptionsItem>
-			<ElDescriptionsItem label="上报人" label-class-name="my-label">{{ detail.userName || "--" }}</ElDescriptionsItem>
-			<ElDescriptionsItem label="上报时间" label-class-name="my-label">{{ detail.reportingTime || "--" }}</ElDescriptionsItem>
-			<ElDescriptionsItem label="区域名称" v-if="4 != detail.source" label-class-name="my-label">{{
-				detail.areaName || "--"
+			<ElDescriptionsItem label="标题" label-class-name="my-label">{{ missionData.title || "--" }}</ElDescriptionsItem>
+			<ElDescriptionsItem label="来源" label-class-name="my-label">{{ missionData.sourceName || "--" }}</ElDescriptionsItem>
+			<ElDescriptionsItem label="严重程度" label-class-name="my-label">{{ missionData.levelsName || "--" }}</ElDescriptionsItem>
+			<ElDescriptionsItem label="上报人" label-class-name="my-label">{{ missionData.userName || "--" }}</ElDescriptionsItem>
+			<ElDescriptionsItem label="上报时间" label-class-name="my-label">{{ missionData.reportingTime || "--" }}</ElDescriptionsItem>
+			<ElDescriptionsItem label="区域名称" v-if="4 != missionData.source" label-class-name="my-label">{{
+				missionData.areaName || "--"
 			}}</ElDescriptionsItem>
-			<ElDescriptionsItem label="异常设备" v-if="4 != detail.source" label-class-name="my-label">
-				<span v-if="detail.deviceName == '' || detail.deviceName == null">-</span>
-                <span v-else>{{ detail.deviceName }}</span>
+			<ElDescriptionsItem label="异常设备" v-if="4 != missionData.source" label-class-name="my-label">
+				<span v-if="missionData.deviceName == '' || missionData.deviceName == null">-</span>
+                <span v-else>{{ missionData.deviceName }}</span>
 			</ElDescriptionsItem>
-			<ElDescriptionsItem label="内容" label-class-name="my-label">{{ detail.notes || "--" }}</ElDescriptionsItem>
-			<ElDescriptionsItem label="异常图片" v-if="4 != detail.source" label-class-name="my-label">
+			<ElDescriptionsItem label="内容" label-class-name="my-label">{{ missionData.notes || "--" }}</ElDescriptionsItem>
+			<ElDescriptionsItem label="异常图片" v-if="4 != missionData.source" label-class-name="my-label">
 				<span v-if="imageUrls.length == 0">-</span>
 				<div v-else>
 					<ElImage
@@ -28,10 +28,10 @@
 				</div>
 			</ElDescriptionsItem>
 		</ElDescriptions>
-		<template  v-if="detail.serviceType">
+		<template  v-if="missionData.serviceType">
 			<div class="base-title m-t-12px">服务类型</div>
 			<ElDescriptions :column="2" border label-width="120px">
-				<ElDescriptionsItem label="任务类型" label-class-name="my-label">{{ detail.serviceType == 2 ? "有偿服务" : "公区服务" || "--" }}</ElDescriptionsItem>
+				<ElDescriptionsItem label="任务类型" label-class-name="my-label">{{ missionData.serviceType == 2 ? "有偿服务" : "公区服务" || "--" }}</ElDescriptionsItem>
 			</ElDescriptions>
 		</template>
 		<div class="base-title m-t-12px">指派信息</div>
@@ -45,7 +45,8 @@ import { number } from "vue-types";
 import BaseForm from "@/core/struct/form/base-form";
 import {
 	tobeAssigned,
-	teamGroupsAllList
+	teamGroupsAllList,
+	inspectionData
 } from "@/api/pipeline-maintenance/work-order";
 import { useDialogStructForm } from "@/core/struct/form/use-base-form";
 import { getRedisDictList, selectMissionDictAll } from "@/api/common/common";
@@ -108,18 +109,18 @@ const { form, registerFormDone } = useDialogStructForm({
 		{
 			type: "ElDatePicker",
 			value: "",
-			label: "上报时间",
-			prop: "reporTime",
+			label: "截止时间",
+			prop: "deadlineTime",
 			attrs: {
 				type: "datetime",
-				placeholder: "上报时间",
+				placeholder: "截止时间",
 				valueFormat: "YYYY-MM-DD HH:mm:ss"
 			}
 		},
 		{
 			type: "ElSelect",
 			value: "",
-			prop: "taskGroup",
+			prop: "teamGroupsId",
 			label: "任务组",
 			attrs: {
 				placeholder: "任务组",
@@ -164,14 +165,14 @@ const { form, registerFormDone } = useDialogStructForm({
 				trigger: "blur"
 			}
 		],
-		reporTime: [
+		deadlineTime: [
 			{
 				required: true,
-				message: "请选择上报时间",
+				message: "请选择截止时间",
 				trigger: "blur"
 			}
 		],
-		taskGroup: [
+		teamGroupsId: [
 			{
 				required: true,
 				message: "请选择任务组",
@@ -182,18 +183,54 @@ const { form, registerFormDone } = useDialogStructForm({
 });
 registerFormDone(async() => {
 	console.log('66666666', form.value)
-	const res = await tobeAssigned({ ...form.value, id: props.id });
+	const res = await tobeAssigned({ ...form.value, missionId: props.id, id: localStorage.getItem("userId") });
 	return res;
 });
 
-const detail = ref({});
 // 详情页数据
-const assignLength = ref(0);
-const imageUrls = ref([]);
+const missionId = ref(0);
+const missionData = ref({})
+const assignUser = ref([])
+const assigns = ref([])
+const assionUserName = ref([])
+const assignLength = ref(0)
+const imageUrls = ref([])
+const handlesUrls = ref([])
+const imageSize = ref(0)
+const handlesSize = ref(0)
 if (props.id) {
-	// getEntityOperation(props.id).then((res) => {
-	// 	detail.value = res
-	// });
+	inspectionData({missionId: props.id, isHandle: 1}).then((res) => {
+		var data = res;
+		missionId.value = props.id;
+		missionData.value = data.bean; //上报信息
+		if (data.assignUser.length > 0) {
+			//指派人员
+			assignUser.value = data.assignUser.substring(0, data.assignUser.lastIndexOf("、"));
+		}
+		assigns.value = data.assigns; //指派信息
+		assionUserName.value = missionData.value.assionUserName;
+		assignLength.value = data.assigns.length;
+		var files = missionData.value.fileList;
+		var handles = data.handles;
+		imageUrls.value = [];
+		handlesUrls.value = [];
+		for (const key in files) {
+			//文件数据渲染
+			if (Object.hasOwnProperty.call(files, key)) {
+				const element = files[key];
+				imageUrls.value.push( `/minio/downMinio?fileName=${element.fileUrl}`);
+			}
+		}
+		imageSize.value = imageUrls.value.length;
+		for (const key in handles) {
+			//文件数据渲染
+			if (Object.hasOwnProperty.call(handles, key)) {
+				const element = handles[key];
+				handlesUrls.value.push( `/minio/downMinio?fileName=${element.fileUrl}`);
+			}
+		}
+		handlesSize.value = handlesUrls.value.length;
+	});
 }
 </script>
 <style lang="scss" scoped>

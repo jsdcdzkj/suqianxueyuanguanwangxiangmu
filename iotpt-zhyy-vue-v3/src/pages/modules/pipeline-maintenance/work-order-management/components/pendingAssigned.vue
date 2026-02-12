@@ -3,7 +3,10 @@
 		<template #pageTableCell="{ column, row }">
 			<!-- 严重程度 -->
 			<div v-if="column.columnKey === 'levelsName'" class="cell-content">
-				<span>{{ row.levelsName }}</span>
+				<span class="degree">
+					<i :class="row.levelsColour"></i>
+					{{ row.levelsName }}
+				</span>
 			</div>
 			<!-- 状态 -->
 			<div v-if="column.columnKey === 'statesName'" class="cell-content">
@@ -48,15 +51,15 @@
 			</template>
 		</template>
 		<template #tableActions="scope">
-			<ElButton v-if="scope.row.states == 1" type="primary" link size="small" @click="handleReject(scope.row)"
+			<ElButton v-if="scope.row.states == 1" type="primary" link @click="handleReject(scope.row)"
 				>驳回</ElButton
 			>
-			<ElButton type="primary" link size="small" @click="handleIgnore(scope.row)"
+			<ElButton type="primary" link @click="handleIgnore(scope.row)"
 				>忽略</ElButton
 			>
-			<ElButton type="primary" link size="small" @click="handleAssign(scope.row)">指派</ElButton>
-			<ElButton type="primary" link size="small" @click="handleView(scope.row)">查看</ElButton>
-			<ElButton type="danger" link size="small" @click="handleDelete(scope.row)">删除</ElButton>
+			<ElButton type="primary" link @click="handleAssign(scope.row)">指派</ElButton>
+			<ElButton type="primary" link @click="handleView(scope.row)">查看</ElButton>
+			<ElButton type="danger" link @click="handleDelete(scope.row)">删除</ElButton>
 		</template>
 	</BasePage>
 </template>
@@ -92,6 +95,7 @@ import RejectDialog from "@/pages/modules/pipeline-maintenance/work-order-manage
 import IgnoreDialog from "@/pages/modules/pipeline-maintenance/work-order-management/dialog/ignoreDialog.vue";
 import AssignDialog from "@/pages/modules/pipeline-maintenance/work-order-management/dialog/assignDialog.vue";
 import { de } from "element-plus/es/locale";
+import { emit } from "process";
 
 const formConfig: FormConfig = {
 	span: 4,
@@ -223,7 +227,7 @@ const { page, pageApi } = usePage({
 				label: "严重程度",
 				prop: "levelsName",
 				columnKey: "levelsName",
-				width: 120
+				width: 100
 			},
 			{
 				label: "标题",
@@ -240,7 +244,8 @@ const { page, pageApi } = usePage({
 			{
 				label: "来源",
 				prop: "sourceName",
-				columnKey: "sourceName"
+				columnKey: "sourceName",
+				width: 120,
 			},
 			{
 				label: "上报人",
@@ -252,13 +257,13 @@ const { page, pageApi } = usePage({
 				label: "上报时间",
 				prop: "reportingTime",
 				columnKey: "reportingTime",
-				width: 180
+				width: 160
 			},
 			{
 				label: "状态",
 				prop: "statesName",
 				columnKey: "statesName",
-				width: 120
+				width: 100
 			},
 			{
 				label: "操作",
@@ -269,12 +274,13 @@ const { page, pageApi } = usePage({
 		]
 	}
 });
-
+const emit = defineEmits(["refreshCount"]);
 // 驳回
 const handleReject = (row) => {
 	createModelAsync({ title: "驳回", width: "600px", showNext: false }, {}, <RejectDialog id={row.id} />).then(
 		() => {
 			pageApi.pageList();
+			emit("refreshCount");
 		}
 	);
 };
@@ -284,6 +290,7 @@ const handleIgnore = (row) => {
 	createModelAsync({ title: "忽略", width: "600px", showNext: false }, {}, <IgnoreDialog id={row.id} />).then(
 		() => {
 			pageApi.pageList();
+			emit("refreshCount");
 		}
 	);
 };
@@ -295,6 +302,7 @@ const handleAssign = (row) => {
 	).then(
 		() => {
 			pageApi.pageList();
+			emit("refreshCount");
 		}
 	);
 };
@@ -313,6 +321,7 @@ const handleDelete = (row) => {
 			if (action == "confirm") {
 				deleteMission({ id: row.id }).then(() => {
 					pageApi.pageList();
+					emit("refreshCount");
 				});
 			}
 		}
@@ -320,5 +329,33 @@ const handleDelete = (row) => {
 }
 
 </script>
-<style>
+<style scope lang="scss">
+.degree {
+	display: inline-block;
+	width: 88px;
+	height: 26px;
+	font-size: 14px !important;
+	color: rgba(0, 0, 0, 0.65);
+	line-height: 26px;
+	border-radius: 4px 4px 4px 4px;
+	box-sizing: border-box;
+	text-align: center;
+	i {
+		display: inline-block;
+		margin-right: 6px;
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		&.warning {
+			background: #e6a23c;
+		}
+		&.success {
+			background: #57BD94;
+		}
+
+		&.danger {
+			background: #ED6A5E;
+		}
+	}
+}
 </style>

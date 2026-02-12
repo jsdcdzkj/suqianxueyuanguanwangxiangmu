@@ -1,20 +1,29 @@
 import { request } from "../instance";
 
-export const getList = (data: any) =>
-	request.post("/sysRole/getList", {}, { params: data });
-
-export const saveRole = (data: any) =>
-	request.post("/sysRole/saveRole", data, {
-		operationMessage: data.id ? "编辑成功" : "添加成功"
+export const getPageList = (data: any) =>
+	request.post("/sysRole/getRolePage.do", data, {
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+		}
 	});
 
-export const getRoleList = (data: any) => {
-	return request.post(`/sysRole/getRoleList?roleId=${data}`);
-};
+export const getList = (data: any) => request.post("/sysRole/getRoleList.do", data);
 
-export const getAllRoles = (data: any) =>
-	request.post("/sysRole/getAllRoles", data);
+export const doEdit = (data: any) => request.post("/sysRole/saveRole.do", data, { operationMessage: "保存成功" });
 
-export const delRole = (data: any) => {
-	return request.post(`/sysRole/delRole?roleId=${data}`);
-};
+export const doDelete = (data: any) =>
+	request.post("/sysRole/delRole.do", data, {
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+		},
+		operationMessage: "删除成功"
+	});
+
+export const getRoleMenu = (data: any) => request.post("/sysRole/getRoleMenu.do", data);
+
+export const getRoleUser = (data: any) =>
+	request.post("/sysRole/getRoleUser.do", data, {
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+		}
+	});

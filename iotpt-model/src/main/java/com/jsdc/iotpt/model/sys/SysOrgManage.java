@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -40,8 +39,13 @@ public class SysOrgManage extends Model<SysOrgManage> {
     private String manager;
     //联系电话
     private String phone;
+    // 手机电话
+    private String telephone;
     //描述
     private String memo;
+
+    // 邮箱
+    private String email;
 
     //大华单位id
     private String iccId;
@@ -55,27 +59,26 @@ public class SysOrgManage extends Model<SysOrgManage> {
     private String isItATenant;
 
 
+    @Transient
+    @TableField(exist = false)
+    private List<SysOrgManage> children;
+
 
     @Transient
     @TableField(exist = false)
-    private List<SysOrgManage> children ;
-
-
-    @Transient
-    @TableField(exist = false)
-    private List<SysOrgDept> deptList ;
+    private List<SysOrgDept> deptList;
 
     @Transient
     @TableField(exist = false)
-    private Integer pageNo ;
+    private Integer pageNo;
 
     @Transient
     @TableField(exist = false)
-    private Integer pageSize ;
+    private Integer pageSize;
 
     @Transient
     @TableField(exist = false)
-    private String label ;
+    private String label;
 
     /**
      * 创建人id

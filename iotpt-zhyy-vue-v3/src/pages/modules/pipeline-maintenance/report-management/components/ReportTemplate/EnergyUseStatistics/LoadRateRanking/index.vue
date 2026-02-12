@@ -8,7 +8,7 @@
             <span class="num">{{ detailInfo.good }}</span>
             户。
         </div>
-        <el-table 
+        <ElTable
             :data="tableData" 
             border 
             stripe
@@ -16,7 +16,7 @@
             style="width: 100%"
             @row-click="handleRowClick"
         >
-            <el-table-column 
+            <ElTableColumn 
                 type="index" 
                 label="排序" 
                 width="70" 
@@ -24,12 +24,12 @@
                 :index="indexMethod"
             >
                 <template #default="scope">
-                    <span :class="getRankClass(scope.$index)">
-                        {{ scope.$index + 1 }}
+                    <span :class="getRankClass($index)">
+                        {{ $index + 1 }}
                     </span>
                 </template>
-            </el-table-column>
-            <el-table-column 
+            </ElTableColumn>
+            <ElTableColumn 
                 label="设备名称" 
                 prop="name" 
                 min-width="180"
@@ -37,26 +37,26 @@
             >
                 <template #default="scope">
                     <div class="device-name">
-                        <el-icon v-if="scope.row.value >= 85" class="warning-icon">
+                        <ElIcon v-if="scope.row.value >= 85" class="warning-icon">
                             <Warning />
-                        </el-icon>
+                        </ElIcon>
                         {{ scope.row.name }}
                     </div>
                 </template>
-            </el-table-column>
-            <el-table-column 
+            </ElTableColumn>
+            <ElTableColumn 
                 label="区域名称" 
                 prop="areaName" 
                 min-width="120"
                 show-overflow-tooltip
-            ></el-table-column>
-            <el-table-column 
+            ></ElTableColumn>
+            <ElTableColumn 
                 label="所属街道" 
                 prop="floorName" 
                 min-width="100"
                 show-overflow-tooltip
-            ></el-table-column>
-            <el-table-column 
+            ></ElTableColumn>
+            <ElTableColumn 
                 label="负载率" 
                 prop="value" 
                 width="120"
@@ -68,41 +68,41 @@
                         {{ formatLoadRate(scope.row.value) }}
                     </span>
                 </template>
-            </el-table-column>
-            <el-table-column 
+            </ElTableColumn>
+            <ElTableColumn 
                 label="负载等级" 
                 width="100"
             >
                 <template #default="scope">
-                    <el-tag 
+                    <ElTag 
                         :type="getLoadLevelTagType(scope.row.value)" 
                         size="small"
                         effect="light"
                     >
                         {{ getLoadLevel(scope.row.value) }}
-                    </el-tag>
+                    </ElTag>
                 </template>
-            </el-table-column>
-            <el-table-column 
+            </ElTableColumn>
+            <ElTableColumn 
                 label="操作" 
                 width="80"
                 align="center"
             >
                 <template #default="scope">
-                    <el-button 
+                    <ElButton
                         type="primary" 
                         link
                         @click.stop="handleDetailClick(scope.row)"
                     >
                         详情
-                    </el-button>
+                    </ElButton>
                 </template>
-            </el-table-column>
-        </el-table>
+            </ElTableColumn>
+        </ElTable>
         
         <!-- 分页器 -->
         <div class="pagination-wrapper" v-if="showPagination">
-            <el-pagination
+            <ElPagination
                 v-model:current-page="currentPage"
                 v-model:page-size="pageSize"
                 :page-sizes="[10, 20, 50, 100]"
@@ -121,7 +121,7 @@ import type { PropType } from "vue";
 import { Warning } from '@element-plus/icons-vue';
 import Common from "../../common.js";
 import { getDeviceCollectTop } from "@/api/pipeline-maintenance/report-management";
-import type { ElTable, TableColumnCtx } from 'element-plus';
+import type { ElTable, ElTableColumn, ElPagination, ElTag, ElButton, ElIcon  } from 'element-plus';
 import Title from "@/pages/modules/pipeline-maintenance/report-management/components/ReportTemplate/Title.vue";
 
 // 定义数据类型
@@ -165,7 +165,8 @@ export default defineComponent({
     name: "LoadRateRanking",
     mixins: [Common] as any,
     components: {
-        Warning
+        Warning,
+        Title
     },
     props: {
         // 是否显示分页器
@@ -272,8 +273,10 @@ export default defineComponent({
             
             const start = (currentPage.value - 1) * pageSize.value;
             const end = start + pageSize.value;
+            console.log('tableDatatableDatatableData', data);
             return data.slice(start, end);
         });
+        
 
         // 格式化负载率
         const formatLoadRate = (value: string | number): string => {
@@ -380,7 +383,7 @@ export default defineComponent({
                     timeType: mixinData.timeTypes,
                     splType: mixinData.type
                 }) as DeviceCollectTopResponse;
-                
+                console.log('9999999999999detailInfo', response)
                 if (response.data) {
                     detailInfo.value = {
                         good: response.data.goodCount || 0,

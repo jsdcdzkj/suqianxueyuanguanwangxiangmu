@@ -3,14 +3,35 @@
 		<template #pageTableCell="{ column, row }">
 			<!-- 严重程度 -->
 			<div v-if="column.columnKey === 'levelsName'" class="cell-content">
-				<span>{{ row.levelsName }}</span>
+				<span class="degree">
+					<i :class="row.levelsColour"></i>
+					{{ row.levelsName }}
+				</span>
 			</div>
 			<!-- 状态 -->
 			<div v-if="column.columnKey === 'statesName'" class="cell-content">
 				<ElTag size="mini" type="danger" v-if="row.states == 1">待指派</ElTag>
-				<ElTag size="mini" type="warning" v-if="row.states == 2 || row.states == 4" > 待处理 </ElTag>
-				<ElTag size="mini" type="success" v-if="row.states == 3">已处理</ElTag>
-				<ElTag size="mini" type="primary" v-if="row.states == 0">暂存</ElTag>
+				<ElTag
+					size="mini"
+					type="warning"
+					v-else-if="row.states == 2"
+				>
+					待处理
+				</ElTag>
+				<ElTag
+					size="mini"
+					type="warning"
+					v-else-if="row.states == 4"
+				>
+					开启
+				</ElTag>
+				<ElTag size="mini" type="success" v-else-if="row.states == 3">已处理</ElTag>
+				<ElTag size="mini" type="primary" v-else-if="row.states == 0">暂存</ElTag>
+				<ElTag size="mini" type="info" v-else-if="row.states == 5">已撤销</ElTag>
+				<ElTag size="mini" type="info" v-else-if="row.states == 6">已忽略</ElTag>
+				<ElTag size="mini" type="info" v-else-if="row.states == 7">已关闭</ElTag>
+				<ElTag size="mini" type="info" v-else-if="row.states == 8">已驳回</ElTag>
+				<ElTag size="mini" type="info" v-else>未知</ElTag>
 			</div>
 		</template>
 		<!-- 来源 -->
@@ -48,10 +69,10 @@
 			</template>
 		</template>
 		<template #tableActions="scope">
-			<ElButton type="primary" link size="small" @click="handleView(scope.row)">查看</ElButton>
-			<ElButton type="primary" link size="small" @click="handleEdit(scope.row)">编辑</ElButton>
-			<ElButton type="primary" link size="small" @click="handleBack(scope.row)">撤销</ElButton>
-			<ElButton type="danger" link size="small" @click="handleDelete(scope.row)">删除</ElButton>
+			<ElButton type="primary" link @click="handleView(scope.row)">查看</ElButton>
+			<ElButton type="primary" v-if="scope.row.states == 0" link @click="handleEdit(scope.row)">编辑</ElButton>
+			<ElButton type="primary" v-if="scope.row.isReads == '0' && scope.row.states != 5 && scope.row.states != 0" link @click="handleBack(scope.row)">撤销</ElButton>
+			<ElButton type="danger" link @click="handleDelete(scope.row)">删除</ElButton>
 		</template>
 	</BasePage>
 </template>
@@ -260,13 +281,15 @@
 					label: "标题",
 					prop: "title",
 					columnKey: "title",
-					minWidth: 200
+					minWidth: 200,
+					showOverflowTooltip: true,
 				},
 				{
 					label: "内容",
 					prop: "notes",
 					columnKey: "notes",
-					minWidth: 200
+					minWidth: 200,
+					showOverflowTooltip: true,
 				},
 				{
 					label: "来源",
@@ -295,11 +318,16 @@
 					label: "操作",
 					columnKey: "actions",
 					prop: "actions",
-					width: 260
+					width: 200
 				}
 			]
 		}
 	});
+
+	// 刷新页面数据
+	const refreshPageData = () => {
+		page.form.onSearch(page.form.value);
+	}
 
 	// 编辑
 	const handleEdit = (row) => {
@@ -322,7 +350,7 @@
 	// 查看
 	const handleView = (row) => {
 		createDrawerAsync(
-			{ title: "详情", width: '960px', showNext: false },
+			{ title: "详情", width: '960px', showNext: false, showConfirm: false, showCancel: false },
 			{},
 			<DetailDialog id={row.id} />
 		).then(() => {
@@ -342,6 +370,38 @@
 			}
 		});
 	}
+	defineExpose({
+		refreshPageData,
+	})
 </script>
-<style>
+<style scope lang="scss">
+.degree {
+	display: inline-block;
+	width: 88px;
+	height: 26px;
+	font-size: 14px !important;
+	color: rgba(0, 0, 0, 0.65);
+	line-height: 26px;
+	border-radius: 4px 4px 4px 4px;
+	box-sizing: border-box;
+	text-align: center;
+	i {
+		display: inline-block;
+		margin-right: 6px;
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		&.warning {
+			background: #e6a23c;
+		}
+		&.success {
+			background: #57BD94;
+		}
+
+		&.danger {
+			background: #ED6A5E;
+		}
+	}
+}
 </style>
+

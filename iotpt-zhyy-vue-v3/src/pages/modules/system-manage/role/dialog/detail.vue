@@ -2,34 +2,34 @@
 	<ElForm ref="formInstance" :model="form" :rules="rules" label-width="100px" label-position="top">
 		<ElRow :gutter="20">
 			<ElCol :span="8">
-				<ElFormItem label="角色名称" prop="userName">
-					<ElInput v-model="form.userName" placeholder="请输入角色名称" />
+				<ElFormItem label="角色名称" prop="roleName">
+					<ElInput v-model="form.roleName" placeholder="请输入角色名称" />
 				</ElFormItem>
 			</ElCol>
 
 			<ElCol :span="8">
-				<ElFormItem label="角色标志" prop="loginName">
-					<ElInput v-model="form.loginName" placeholder="请输入角色标志" />
+				<ElFormItem label="角色标志" prop="roleFlag">
+					<ElInput v-model="form.roleFlag" placeholder="请输入角色标志" />
 				</ElFormItem>
 			</ElCol>
 			<ElCol :span="8">
-				<ElFormItem label="所属系统" prop="roleId">
-					<ElSelect v-model="form.roleId" placeholder="请选择所属系统">
-						<template v-for="option in roleOptions" :key="option.value">
+				<ElFormItem label="所属系统" prop="systemId">
+					<ElSelect v-model="form.systemId" placeholder="请选择所属系统" @change="handleSystemChange">
+						<template v-for="option in sysOptions" :key="option.value">
 							<ElOption :label="option.label" :value="option.value"></ElOption>
 						</template>
 					</ElSelect>
 				</ElFormItem>
 			</ElCol>
 			<ElCol :span="24">
-				<ElFormItem label="菜单权限" prop="unitId">
+				<ElFormItem label="菜单权限" prop="menuIds">
 					<div class="tree-container">
 						<ElTree
 							ref="treeRef"
-							:data="unitOptions"
+							:data="treeData"
 							:props="treeProps"
 							show-checkbox
-							node-key="value"
+							node-key="id"
 							:default-expanded-keys="defaultExpandedKeys"
 							:default-checked-keys="defaultCheckedKeys"
 						/>
@@ -37,8 +37,8 @@
 				</ElFormItem>
 			</ElCol>
 			<ElCol :span="24">
-				<ElFormItem label="备注" prop="remark">
-					<ElInput type="textarea" v-model="form.remark" :rows="3" placeholder="请输入备注" />
+				<ElFormItem label="备注" prop="memo">
+					<ElInput type="textarea" v-model="form.memo" :rows="3" placeholder="请输入备注" />
 				</ElFormItem>
 			</ElCol>
 		</ElRow>
@@ -46,21 +46,27 @@
 </template>
 
 <script setup lang="ts">
-	import { ref, onMounted, reactive } from "vue";
+	import { ref, onMounted, reactive, computed, watch } from "vue";
 	import { useDialogForm } from "@/core/dialog/dialog-container";
 	import { ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElTree, ElRow, ElCol, ElMessage } from "element-plus";
-
+	import { getMenuTree } from "@/api/setting/menu";
+	import { doEdit } from "@/api/setting/role";
+	const props = defineProps({
+		rowInfo: {
+			type: Object,
+			default: () => ({})
+		},
+		systematicType: {
+			type: Array,
+			default: () => []
+		}
+	});
 	const form = reactive({
-		userName: "",
-		phone: "",
-		loginName: "",
-		roleId: "",
-		password: "",
-		status: 1,
-		unitId: "",
-		deptId: "",
-		remark: "",
-		avatar: ""
+		roleName: "",
+		roleFlag: "",
+		systemId: "",
+		menuIds: "",
+		memo: ""
 	});
 
 	// 添加树形组件引用
@@ -72,100 +78,120 @@
 	// 默认选中的节点
 	const defaultCheckedKeys = ref([]);
 
-	const roleOptions = [
-		{ label: "管理员", value: "1" },
-		{ label: "普通用户", value: "2" }
-	];
+	const sysOptions = computed(() => props.systematicType);
 
-	const unitOptions = [
-		{
-			label: "系统管理",
-			value: "1",
-			children: [
-				{
-					label: "用户管理",
-					value: "1-1",
-					children: [
-						{ label: "用户查询", value: "1-1-1" },
-						{ label: "用户新增", value: "1-1-2" },
-						{ label: "用户修改", value: "1-1-3" }
-					]
-				},
-				{
-					label: "角色管理",
-					value: "1-2",
-					children: [
-						{ label: "角色查询", value: "1-2-1" },
-						{ label: "角色新增", value: "1-2-2" }
-					]
-				}
-			]
-		},
-		{
-			label: "业务管理",
-			value: "2",
-			children: [
-				{
-					label: "订单管理",
-					value: "2-1",
-					children: [
-						{ label: "订单查询", value: "2-1-1" },
-						{ label: "订单创建", value: "2-1-2" }
-					]
-				}
-			]
+	// 添加树形数据
+	const treeData = ref([]);
+	const treeProps = {
+		children: "children",
+		label: "title",
+		value: "id"
+	};
+
+	const handleSystemChange = async (value: string) => {
+		if (value) {
+			try {
+				const res = await getMenuTree({
+					systemId: value
+				});
+				treeData.value = res;
+				// 清空已选中的菜单权限
+				defaultCheckedKeys.value = [];
+			} catch (error) {
+				console.error("获取菜单树失败:", error);
+				treeData.value = [];
+				defaultCheckedKeys.value = [];
+			}
+		} else {
+			treeData.value = [];
+			defaultCheckedKeys.value = [];
 		}
-	];
-
-	const deptOptions = [
-		{ label: "部门1", value: "1" },
-		{ label: "部门2", value: "2" }
-	];
-
-	const props = defineProps({
-		rowInfo: {
-			type: Object,
-			default: () => ({})
-		}
-	});
-
+	};
 	const rules = reactive({
-		userName: [{ required: true, message: "请输入用户名称", trigger: "blur" }],
-		loginName: [{ required: true, message: "请输入登录名称", trigger: "blur" }],
-		roleId: [{ required: true, message: "请选择用户角色", trigger: "blur" }],
-		password: [{ required: true, message: "请输入用户密码", trigger: "blur" }],
-		status: [{ required: true, message: "请选择用户状态", trigger: "blur" }],
-		unitId: [{ required: true, message: "请选择所属单位", trigger: "blur" }],
-		deptId: [{ required: true, message: "请选择所属部门", trigger: "blur" }]
+		roleName: [{ required: true, message: "请输入角色名称", trigger: "blur" }],
+		roleFlag: [{ required: true, message: "请输入角色标志", trigger: "blur" }],
+		systemId: [{ required: true, message: "请选择所属系统", trigger: "blur" }],
+		menuIds: [
+			{
+				required: true,
+				message: "请选择菜单权限",
+				trigger: "change", // 改为change触发
+				validator: (rule, value, callback) => {
+					if (!treeRef.value) {
+						callback(new Error("请选择菜单权限"));
+						return;
+					}
+					const checkedKeys = treeRef.value.getCheckedKeys();
+					const halfCheckedKeys = treeRef.value.getHalfCheckedKeys();
+					if (checkedKeys.length === 0 && halfCheckedKeys.length === 0) {
+						callback(new Error("请选择菜单权限"));
+					} else {
+						callback();
+					}
+				}
+			}
+		],
+		memo: [{ required: true, message: "请输入备注", trigger: "blur" }]
 	});
 
 	const { registerFormDone, formInstance } = useDialogForm();
 
-	if (props.rowInfo.id) {
-		for (const key in form) {
-			if (key in form && key in props.rowInfo) {
-				form[key] = props.rowInfo[key];
+	// 监听systemId的变化，确保在系统切换后重新加载菜单
+	watch(
+		() => form.systemId,
+		async (newVal) => {
+			if (newVal) {
+				await handleSystemChange(newVal);
+				// 如果是编辑模式，设置已选中的菜单权限
+				if (props.rowInfo?.id && props.rowInfo.menuIds) {
+					defaultCheckedKeys.value = Array.isArray(props.rowInfo.menuIds)
+						? props.rowInfo.menuIds
+						: [props.rowInfo.menuIds];
+				}
 			}
 		}
-		// 设置默认选中的菜单权限
-		if (props.rowInfo.unitId) {
-			defaultCheckedKeys.value = Array.isArray(props.rowInfo.unitId)
-				? props.rowInfo.unitId
-				: [props.rowInfo.unitId];
-		}
+	);
+
+	// 编辑时的数据初始化
+	if (props.rowInfo.id) {
+		Object.assign(form, {
+			...props.rowInfo,
+			systemId: String(props.rowInfo.systemId), // 确保是字符串类型
+			menuIds: Array.isArray(props.rowInfo.menuIds)
+				? props.rowInfo.menuIds
+				: props.rowInfo.menuIds
+					? [props.rowInfo.menuIds]
+					: []
+		});
 	}
 
 	registerFormDone(async () => {
+		// 先进行表单验证
+		try {
+			await formInstance.value.validate();
+		} catch (error) {
+			return false;
+		}
+
 		const submitData = { ...form };
 		if (props.rowInfo.id) {
 			submitData.id = props.rowInfo.id;
 		}
+
 		// 获取选中的节点
 		if (treeRef.value) {
-			submitData.unitId = treeRef.value.getCheckedKeys();
+			const checkedKeys = treeRef.value.getCheckedKeys();
+			const halfCheckedKeys = treeRef.value.getHalfCheckedKeys();
+			submitData.menuIds = [...checkedKeys, ...halfCheckedKeys];
 		}
-		// TODO: 调用保存用户信息的API
-		return true;
+
+		try {
+			await doEdit(submitData);
+			return true;
+		} catch (error) {
+			console.error("保存角色失败:", error);
+			return false;
+		}
 	});
 </script>
 

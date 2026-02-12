@@ -11,7 +11,7 @@ spring:
     name: zhyy
   profiles:
     active: api
-    include: kafka
+#    include: kafka
 
 sa-token:
   alone-redis:

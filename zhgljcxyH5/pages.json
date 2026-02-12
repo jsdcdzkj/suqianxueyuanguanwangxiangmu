@@ -32,7 +32,8 @@
 		"pages": [{
 				"path": "repair/index",
 				"style": {
-					"navigationBarTitleText": "报事报修"
+					"navigationBarTitleText": "报事报修",
+					"navigationStyle": "custom"
 				}
 			},
 			{
@@ -42,9 +43,23 @@
 				}
 			},
 			{
+				"path": "alarm/index",
+				"style": {
+					// "navigationBarTitleText": "告警"
+					"navigationStyle": "custom"
+				}
+			},
+			{
 				"path": "waterConsumption/index",
 				"style": {
 					"navigationBarTitleText": "用水查询"
+				}
+			},
+			{
+				"path": "repair/add",
+				"style": {
+					"navigationBarTitleText": "",
+					"navigationStyle": "custom"
 				}
 			}
 		]
@@ -53,8 +68,7 @@
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "综合管网监测系统",
 		"navigationBarBackgroundColor": "#4378E7",
-		"backgroundColor": "#ffffff",
-		"navigationStyle": "custom"
+		"backgroundColor": "#ffffff"
 	},
 	"uniIdRouter": {}
 }

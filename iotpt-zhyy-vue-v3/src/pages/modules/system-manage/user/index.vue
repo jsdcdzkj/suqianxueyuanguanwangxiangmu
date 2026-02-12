@@ -2,18 +2,21 @@
 	<BasePage v-bind="page">
 		<!-- "status": "", //状态 0启用1禁用 -->
 		<template #pageTableCell="{ column, row }">
-			<template v-if="column.columnKey === 'status'">
-				<ElTag :type="row.status == 0 ? 'success' : 'info'">
-					{{ row.status == 0 ? "启用" : "禁用" }}
-				</ElTag>
+			<template v-if="column.columnKey === 'isEnable'">
+				<ElSwitch :model-value="row.isEnable === 1" @change="(value) => handleStatusChange(row, value)" />
+			</template>
+			<template v-if="column.columnKey === 'roleNamesStr'">
+				<template v-for="(role, index) in row.roleNamesStr?.split(',')" :key="index">
+					<ElTag v-if="role" class="mr-1 mt-2px mb-2px">{{ role }}</ElTag>
+				</template>
 			</template>
 		</template>
-		<!-- <template #pageHeader></template> -->
-		<template #pageSearch></template>
 	</BasePage>
 </template>
 
 <script setup lang="tsx">
+	import { ref, onMounted } from "vue";
+
 	import { createModelAsync, createDrawerAsync } from "@/core/dialog";
 	import { type FormConfig } from "@/core/struct/form/use-base-form";
 	import { usePage } from "@/core/struct/page";
@@ -21,8 +24,42 @@
 	import Detail from "./dialog/detail.vue";
 	import { markRaw } from "vue";
 	import { Plus, Upload } from "@element-plus/icons-vue";
-	import { getList, delUser, resetPass, syncAccountInfo } from "@/api/setting/user";
-	import { ElMessageBox, ElMessage, type Action } from "element-plus";
+	import { getListUser, delUser, doEnable, syncAccountInfo, toExportTemplate, importUser } from "@/api/setting/user";
+	import { findOrg, findAllDeptByUnit } from "@/api/setting/org";
+	import { getList } from "@/api/setting/role";
+	import { ElMessageBox, ElMessage, type Action, ElSwitch, ElTag } from "element-plus";
+	import { downBlobFile, createFileInput } from "@/core/utils";
+	const isDeptDisabled = ref(true);
+	const orgTreeData = ref<any[]>([]);
+	const deptList = ref<any[]>([]);
+	const roleList = ref<any[]>([]);
+
+	onMounted(async () => {
+		const res = await findOrg();
+		orgTreeData.value = res;
+		const roleRes = await getList({});
+		roleList.value = roleRes;
+	});
+	const handleUnitChange = async (value) => {
+		// 清空部门选择值
+		if (page.form?.value) {
+			page.form.value.deptId = "";
+		}
+
+		if (value) {
+			isDeptDisabled.value = false;
+			try {
+				const res = await findAllDeptByUnit({ orgId: value });
+				deptList.value = res || [];
+			} catch (error) {
+				console.error("获取部门列表失败:", error);
+				deptList.value = [];
+			}
+		} else {
+			isDeptDisabled.value = true;
+			deptList.value = [];
+		}
+	};
 
 	const formConfig: FormConfig = {
 		span: 3,
@@ -32,66 +69,55 @@
 		notMargn: true,
 		formItems: [
 			{
-				type: "ElSelect",
+				type: "ElTreeSelect",
 				value: "",
-				prop: "markResult",
+				prop: "unitId",
 				attrs: {
 					placeholder: "选择所属单位",
-					clearable: true
-				},
-				select: {
-					type: "ElOption",
-					label: "label",
-					value: "id",
-					list: [
-						{
-							label: "区域1",
-							id: "0"
-						},
-						{
-							label: "区域2",
-							id: "1"
-						}
-					]
+					clearable: true,
+					checkStrictly: true,
+					renderAfterExpand: false,
+					onChange: handleUnitChange,
+					props: {
+						label: "label",
+						value: "id",
+						children: "children"
+					},
+					data: orgTreeData
 				}
 			},
 			{
 				type: "ElSelect",
 				value: "",
-				prop: "markResult2",
+				prop: "deptId",
 				attrs: {
 					placeholder: "选择所属部门",
+					clearable: true,
+					disabled: isDeptDisabled
+				},
+				select: {
+					type: "ElOption",
+					label: "deptName",
+					value: "id",
+					list: deptList
+				}
+			},
+
+			{
+				type: "ElSelect",
+				value: "",
+				prop: "roleId",
+				label: "角色名称",
+				attrs: {
+					placeholder: "请选择角色名称",
+					filterable: true,
 					clearable: true
 				},
 				select: {
 					type: "ElOption",
-					label: "label",
+					label: "roleName",
 					value: "id",
-					list: [
-						{
-							label: "区域1",
-							id: "0"
-						},
-						{
-							label: "区域2",
-							id: "1"
-						}
-					]
-				}
-			},
-			{
-				type: "ElInput",
-				value: "",
-				label: "",
-				prop: "username",
-				attrs: {
-					placeholder: "角色名称",
-					clearable: true,
-					onKeyup: (e: KeyboardEvent) => {
-						if (e.key === "Enter") {
-							pageApi.pageList();
-						}
-					}
+					list: roleList
 				}
 			},
 			{
@@ -113,7 +139,7 @@
 				type: "ElInput",
 				value: "",
 				label: "",
-				prop: "username3",
+				prop: "realName",
 				attrs: {
 					placeholder: "用户名称",
 					clearable: true,
@@ -128,7 +154,7 @@
 				type: "ElInput",
 				value: "",
 				label: "",
-				prop: "username4",
+				prop: "loginName",
 				attrs: {
 					placeholder: "登录名称",
 					clearable: true,
@@ -145,7 +171,7 @@
 	const { page, pageApi } = usePage({
 		formConfig,
 		title: "用户列表",
-		listApi: getList,
+		listApi: getListUser,
 		toolbar: [
 			{
 				label: "新增",
@@ -162,37 +188,35 @@
 							closeOnPressEscape: false
 						},
 						{},
-						<Detail />
+						<Detail orgTreeData={orgTreeData.value} />
 					).then(() => {
 						pageApi.pageList();
 					});
 				}
 			},
-			// 同步
+			// 下载模板
+			{
+				label: "下载模板",
+				type: "warning",
+				size: "default",
+				onClick: async () => {
+					toExportTemplate().then((file) => {
+						downBlobFile(file, "用户导入模板.xlsx");
+					});
+				}
+			},
+			// 批量导入
 			{
 				label: "批量导入",
 				type: "primary",
 				size: "default",
-				icon: markRaw(Upload),
 				onClick: async () => {
-					// ElMessageBox.alert("是否删除该条数据", "提示", {
-					// 		confirmButtonText: "确认",
-					// 		callback: (action: Action) => {
-					// 			if (action == "confirm") {
-					// 				delUser(row.id).then(() => {
-					// 					pageApi.pageList();
-					// 				});
-					// 			}
-					// 		}
-					// 	});
-
-					ElMessageBox.confirm("确定同步用户数据？", "提示", {
-						type: "warning"
-					}).then(async () => {
-						await syncAccountInfo({}).then(() => {
-							ElMessage.success("同步完成");
+					createFileInput(".xlsx").then((file) => {
+						const formData = new FormData();
+						formData.append("file", file);
+						importUser(formData).then(() => {
+							pageApi.pageList();
 						});
-						pageApi.pageList();
 					});
 				}
 			}
@@ -214,18 +238,10 @@
 
 		tableConfig: {
 			dataSource: [{ label: 1 }],
-
 			attrs: {
 				fit: true,
 				border: true,
-				height: "100%",
-				rowClassName: ({ rowIndex }) => {
-					if (rowIndex % 2 != 0) {
-						return "warning-row";
-					} else {
-						return "success-row";
-					}
-				}
+				height: "100%"
 			},
 			columns: [
 				{
@@ -236,15 +252,16 @@
 					align: "center"
 				},
 				{
-					columnKey: "username5",
+					columnKey: "dahuaCode",
 					label: "员工编号",
-					prop: "username5",
-					align: "center"
+					prop: "dahuaCode",
+					align: "center",
+					width: "160px"
 				},
 				{
-					columnKey: "username",
+					columnKey: "realName",
 					label: "用户姓名",
-					prop: "username",
+					prop: "realName",
 					align: "center",
 					width: "120px"
 				},
@@ -256,42 +273,43 @@
 					width: "120px"
 				},
 				{
-					columnKey: "realName",
+					columnKey: "roleNamesStr",
 					label: "角色名称",
-					prop: "realName",
+					prop: "roleNamesStr",
 					align: "center"
 				},
 				{
-					columnKey: "workId",
+					columnKey: "deptName",
 					label: "所属组织",
-					prop: "workId",
+					prop: "deptName",
 					align: "center"
 				},
 
 				{
-					columnKey: "status",
+					columnKey: "isEnable",
 					label: "是否启用",
-					prop: "status",
-					align: "center"
+					prop: "isEnable",
+					align: "center",
+					width: "100px"
 				},
 				{
-					columnKey: "workId",
+					columnKey: "updateUserName",
 					label: "修改人",
-					prop: "workId",
+					prop: "updateUserName",
 					align: "center",
 					width: "120px"
 				},
 				{
-					columnKey: "workId",
+					columnKey: "updateTime",
 					label: "修改时间",
-					prop: "workId",
+					prop: "updateTime",
 					align: "center",
 					width: "180px"
 				},
 				{
-					columnKey: "workId",
+					columnKey: "memo",
 					label: "备注",
-					prop: "workId",
+					prop: "memo",
 					align: "center"
 				},
 				{
@@ -308,7 +326,7 @@
 					type: "primary",
 					size: "small",
 					plain: true,
-					onClick: async ({ row }) => {
+					onClick: async (row: any) => {
 						createDrawerAsync(
 							{
 								title: "新增用户",
@@ -318,7 +336,7 @@
 								closeOnPressEscape: false
 							},
 							{},
-							<Detail rowInfo={row} />
+							<Detail rowInfo={row} orgTreeData={orgTreeData.value} />
 						).then(() => {
 							pageApi.pageList();
 						});
@@ -330,30 +348,12 @@
 					plain: true,
 					danger: true,
 					type: "danger",
-					onClick: ({ row }) => {
+					onClick: (row: any) => {
 						ElMessageBox.alert("是否删除该条数据", "提示", {
 							confirmButtonText: "确认",
 							callback: (action: Action) => {
 								if (action == "confirm") {
-									delUser(row.id).then(() => {
-										pageApi.pageList();
-									});
-								}
-							}
-						});
-					}
-				},
-				{
-					text: "重置密码",
-					size: "small",
-					plain: true,
-					type: "warning",
-					onClick: ({ row }) => {
-						ElMessageBox.alert("是否重置该条数据", "提示", {
-							confirmButtonText: "确认",
-							callback: (action: Action) => {
-								if (action == "confirm") {
-									resetPass(row.id).then(() => {
+									delUser({ id: row.id }).then(() => {
 										pageApi.pageList();
 									});
 								}
@@ -361,7 +361,34 @@
 						});
 					}
 				}
+				// {
+				// 	text: "重置密码",
+				// 	size: "small",
+				// 	plain: true,
+				// 	type: "warning",
+				// 	onClick: ({ row }) => {
+				// 		ElMessageBox.alert("是否重置该条数据", "提示", {
+				// 			confirmButtonText: "确认",
+				// 			callback: (action: Action) => {
+				// 				if (action == "confirm") {
+				// 					resetPass(row.id).then(() => {
+				// 						pageApi.pageList();
+				// 					});
+				// 				}
+				// 			}
+				// 		});
+				// 	}
+				// }
 			]
 		}
 	});
+	const handleStatusChange = async (row: any, value: boolean) => {
+		try {
+			await doEnable({ id: row.id, isEnable: value ? 1 : 0 });
+			ElMessage.success(value ? "启用成功" : "禁用成功");
+			pageApi.pageList();
+		} catch (error) {
+			ElMessage.error("操作失败");
+		}
+	};
 </script>

@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * 解析树形数据工具类
+ *
  * @Description:
  */
 public class TreeParserUtils {
@@ -24,17 +25,17 @@ public class TreeParserUtils {
         List<E> resultList = new ArrayList<>();
 
         //获取顶层元素集合
-        String parentId;
+        Integer parentId;
         for (E entity : entityList) {
             parentId = entity.getParentId();
-            if (parentId == null || topId.equals(parentId)) {
+            if (parentId == null || topId.equals(parentId.toString())) {
                 resultList.add(entity);
             }
         }
 
         //获取每个顶层元素的子数据集合
         for (E entity : resultList) {
-            entity.setChildList(getSubList(entity.getId(), entityList));
+            entity.setChildList(getSubList(entity.getId().toString(), entityList));
         }
 
         return resultList;
@@ -55,7 +56,7 @@ public class TreeParserUtils {
 
         //子集的直接子对象
         for (E entity : entityList) {
-            parentId = entity.getParentId();
+            parentId = entity.getParentId().toString();
             if (id.equals(parentId)) {
                 childList.add(entity);
             }
@@ -63,7 +64,7 @@ public class TreeParserUtils {
 
         //子集的间接子对象
         for (E entity : childList) {
-            entity.setChildList(getSubList(entity.getId(), entityList));
+            entity.setChildList(getSubList(entity.getId().toString(), entityList));
         }
 
         //递归退出条件

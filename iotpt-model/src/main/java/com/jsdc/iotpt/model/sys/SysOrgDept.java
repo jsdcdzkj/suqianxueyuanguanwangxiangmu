@@ -8,7 +8,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -36,8 +35,12 @@ public class SysOrgDept extends Model<SysOrgDept> {
     private String manager;
     //电话
     private String phone;
+    // 手机电话
+    private String telephone;
     //部门位置
-    private String address ;
+    private String address;
+    // 邮箱
+    private String email;
 
     //备注信息
     private String memo;
@@ -45,14 +48,14 @@ public class SysOrgDept extends Model<SysOrgDept> {
     private Integer parentId;
 
     //包含区域
-    private String ids ;
+    private String ids;
     //a华部门id
-    private Long dahuaDeptId ;
+    private Long dahuaDeptId;
 
 
     @Transient
     @TableField(exist = false)
-    private List<SysOrgDept> children ;
+    private List<SysOrgDept> children;
 
     @Transient
     @TableField(exist = false)
@@ -65,23 +68,21 @@ public class SysOrgDept extends Model<SysOrgDept> {
 
     @Transient
     @TableField(exist = false)
-    private String orgName ;
+    private String orgName;
 
 
     @Transient
     @TableField(exist = false)
-    private Integer pageNo ;
+    private Integer pageNo;
 
     @Transient
     @TableField(exist = false)
-    private Integer pageSize ;
-
+    private Integer pageSize;
 
 
     @Transient
     @TableField(exist = false)
-    private Integer areaId ;
-
+    private Integer areaId;
 
 
     /**
@@ -111,7 +112,7 @@ public class SysOrgDept extends Model<SysOrgDept> {
 
     @Transient
     @TableField(exist = false)
-    private List<List<Object>> showData ;
+    private List<List<Object>> showData;
 
     /**
      * 部门人数
@@ -122,17 +123,17 @@ public class SysOrgDept extends Model<SysOrgDept> {
 
     @Transient
     @TableField(exist = false)
-    private Integer anfang ;
+    private Integer anfang;
     @Transient
     @TableField(exist = false)
-    private Integer xiaofang ;
+    private Integer xiaofang;
     @Transient
     @TableField(exist = false)
-    private Integer shebei ;
+    private Integer shebei;
 
     @Transient
     @TableField(exist = false)
-    private List<Integer> visitorAreaIds ;
+    private List<Integer> visitorAreaIds;
 
     @Transient
     @TableField(exist = false)
@@ -144,7 +145,6 @@ public class SysOrgDept extends Model<SysOrgDept> {
     @Transient
     @TableField(exist = false)
     private String recyclingRate; // 问卷回收率
-
 
 
 }

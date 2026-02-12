@@ -69,6 +69,10 @@ export default defineComponent({
     cname: "三相不平衡分析",
     name: "ThreeUnbalancedAnalyses",
     mixins: [Common] as any,
+    components: {
+        Title
+    },
+
     setup(props, { expose }) {
         // Refs
         const chartEl = ref<HTMLDivElement | null>(null);
@@ -257,7 +261,7 @@ export default defineComponent({
                 
                 // 获取设备列表
                 const devList = await getDeviceCollectList({ areaIds: mixinData.areaIds });
-                const deviceIds = devList.data.map((item: DeviceItem) => item.id);
+                const deviceIds = devList.map((item: DeviceItem) => item.id);
                 
                 // 并行请求电流和电压不平衡数据
                 const [currentRes, voltageRes] = await Promise.all([
@@ -403,7 +407,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.module-item-desc {
+/* .module-item-desc {
     margin-bottom: 16px;
     padding: 16px;
     background-color: #f8f9fa;
@@ -412,7 +416,7 @@ export default defineComponent({
     line-height: 1.6;
     color: #666;
     border-left: 4px solid #1890ff;
-}
+} */
 
 .module-item-desc:first-of-type {
     border-left-color: #52c41a; /* 绿色表示电流 */

@@ -1,5 +1,23 @@
 <template>
 	<BasePage v-bind="page">
+		<template #pageTableCell="{ column, row }">
+			<!-- 紧急程度 -->
+			<template v-if="column.columnKey == 'urgencyName'">
+				<ElTag size="mini" :type="row.urgencyColour">{{ row.urgencyName }}</ElTag>
+			</template>
+			<template v-if="column.columnKey == 'statesName'">
+				<ElTag size="mini" type="danger" v-if="row.states == 1">待指派</ElTag>
+				<ElTag
+					size="mini"
+					type="warning"
+					v-else-if="row.states == 2 || row.states == 4"
+				>
+					待处理
+				</ElTag>
+				<ElTag size="mini" type="success" v-else-if="row.states == 3">已处理</ElTag>
+				<ElTag size="mini" type="info" v-else-if="row.states == 0">暂存</ElTag>
+			</template>
+		</template>
 		<!-- 来源 -->
 		<template #pageTableHeader="{ column }">
 			<template v-if="column.columnKey == 'sourceName'">
@@ -35,8 +53,8 @@
 			</template>
 		</template>
 		<template #tableActions="scope">
-			<ElButton type="primary" link size="small" @click="handleView(scope.row)">查看</ElButton>
-			<ElButton type="danger" link size="small" @click="handleView(scope.row)">删除</ElButton>
+			<ElButton type="primary" link @click="handleView(scope.row)">查看</ElButton>
+			<ElButton type="danger" link @click="handleDelete(scope.row)">删除</ElButton>
 		</template>
 	</BasePage>
 </template>
@@ -63,8 +81,9 @@
 	import { getRedisDictList, selectMissionDictAll } from "@/api/common/common";
 	import { type FormConfig } from "@/core/struct/form/use-base-form";
 	import { createDrawerAsync, createModelAsync } from "@/core/dialog";
-	import DealListDialog from "@/pages/modules/alarm-center/history-alarm/dialog/dealListDialog.vue";
-	import DetailDialog from "@/pages/modules/alarm-center/history-alarm/dialog/detailDialog.vue";
+	import { ElMessageBox, ElMessage, type Action } from "element-plus";
+	import DetailDialog from "@/pages/modules/pipeline-maintenance/work-order-management/dialog/detailDialog.vue";
+	import { downFile } from "@/core/utils";
 
 	const formConfig: FormConfig = {
 		inline: false,
@@ -244,7 +263,7 @@
 					label: "紧急程度",
 					prop: "urgencyName",
 					columnKey: "urgencyName",
-					width: 120
+					width: 100
 				},
 				{
 					label: "来源",
@@ -256,7 +275,7 @@
 					label: "任务类型",
 					prop: "taskTypeName",
 					columnKey: "taskTypeName",
-					width: 150
+					width: 100
 				},
 				{
 					label: "标题",
@@ -276,7 +295,7 @@
 					label: "上报人",
 					prop: "userName",
 					columnKey: "userName",
-					width: 120
+					width: 100
 				},
 				{
 					label: "上报时间",
@@ -311,26 +330,47 @@
 			]
 		}
 	});
-
-	// 查看
-	const handleDealList = (row) => {
-		createDrawerAsync(
-			{ title: "处置记录", width: '960px', showNext: false },
-			{},
-			<DealListDialog id={row.id} />
-		).then(() => {
-			pageApi.pageList();
+	const emit = defineEmits(["refreshCount"]);
+	// 导出
+	const handleExport = () => {
+		missionExcel({ 
+			...page.form.value,
+			states:3,
+			isHandle:1,
+			pageIndex:page.pagination.currentPage,
+			pageSize:20,
+		}).then((res) => {
+			console.log(res)
+			downFile(URL.createObjectURL(res), "任务处理记录.xlsx");
 		});
 	}
 	const handleView = (row) => {
 		createDrawerAsync(
-			{ title: "详情", width: '960px', showNext: false },
+			{ title: "详情", width: '960px', showNext: false, showConfirm: false, showCancel: false },
 			{},
 			<DetailDialog id={row.id} />
 		).then(() => {
 			pageApi.pageList();
 		});
 	}
+	// 删除
+	const handleDelete = (row) => {
+		ElMessageBox.alert("此操作将删除该信息, 是否继续?", "提示", {
+			confirmButtonText: "确认",
+			callback: (action: Action) => {
+				if (action == "confirm") {
+					deleteMission({ id: row.id }).then(() => {
+						pageApi.pageList();
+						emit("refreshCount");
+					});
+				}
+			}
+		});
+	}
+
+	defineExpose({
+		handleExport
+	})
 </script>
 <style>
 </style>

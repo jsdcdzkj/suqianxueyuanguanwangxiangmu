@@ -1,5 +1,28 @@
 <template>
 	<BasePage v-bind="page">
+		<template #pageTableCell="{ column, row }">
+			<!-- 紧急程度 -->
+			<template v-if="column.columnKey == 'urgencyName'">
+				<ElTag size="mini" :type="row.urgencyColour">{{ row.urgencyName }}</ElTag>
+			</template>
+			<template v-if="column.columnKey == 'statesName'">
+				<ElTag size="mini" type="danger" v-if="row.states == 1">待指派</ElTag>
+				<ElTag
+					size="mini"
+					type="warning"
+					v-else-if="row.states == 2 || row.states == 4"
+				>
+					待处理
+				</ElTag>
+				<ElTag size="mini" type="success" v-else-if="row.states == 3">已处理</ElTag>
+				<ElTag size="mini" type="info" v-else-if="row.states == 0">暂存</ElTag>
+			</template>
+			<!-- 是否挂起 -->
+			<template v-if="column.columnKey == 'isPending'">
+				<span v-if="row.isPending == 1">是</span>
+                <span v-else>否</span>
+			</template>
+		</template>
 		<!-- 来源 -->
 		<template #pageTableHeader="{ column }">
 			<template v-if="column.columnKey == 'sourceName'">
@@ -35,9 +58,9 @@
 			</template>
 		</template>
 		<template #tableActions="scope">
-			<ElButton type="primary" link size="small" @click="handleDeal(scope.row)">处理</ElButton>
-			<ElButton type="primary" link size="small" @click="handleView(scope.row)">查看</ElButton>
-			<ElButton type="danger" link size="small" @click="handleDelete(scope.row)">删除</ElButton>
+			<ElButton type="primary" link @click="handleDeal(scope.row)">处理</ElButton>
+			<ElButton type="primary" link @click="handleView(scope.row)">查看</ElButton>
+			<ElButton type="danger" link @click="handleDelete(scope.row)">删除</ElButton>
 		</template>
 	</BasePage>
 </template>
@@ -246,19 +269,19 @@
 					label: "紧急程度",
 					prop: "urgencyName",
 					columnKey: "urgencyName",
-					width: 120
+					width: 100
 				},
 				{
 					label: "来源",
 					prop: "sourceName",
 					columnKey: "sourceName",
-					width: 200
+					width: 120
 				},
 				{
 					label: "任务类型",
 					prop: "taskTypeName",
 					columnKey: "taskTypeName",
-					width: 150
+					width: 100
 				},
 				{
 					label: "标题",
@@ -278,7 +301,7 @@
 					label: "上报人",
 					prop: "userName",
 					columnKey: "userName",
-					width: 120
+					width: 100
 				},
 				{
 					label: "上报时间",
@@ -314,11 +337,12 @@
 					label: "操作",
 					columnKey: "actions",
 					prop: "actions",
-					width: 150
+					width: 200
 				}
 			]
 		}
 	});
+	const emit = defineEmits(["refreshCount"]);
 
 	// 处理
 	const handleDeal = (row) => {
@@ -328,11 +352,12 @@
 			<DealDialog id={row.id} />
 		).then(() => {
 			pageApi.pageList();
+			emit("refreshCount");
 		});
 	}
 	const handleView = (row) => {
 		createDrawerAsync(
-			{ title: "详情", width: '960px', showNext: false },
+			{ title: "详情", width: '960px', showNext: false, showConfirm: false, showCancel: false },
 			{},
 			<DetailDialog id={row.id} />
 		).then(() => {
@@ -347,6 +372,7 @@
 				if (action == "confirm") {
 					deleteMission({ id: row.id }).then(() => {
 						pageApi.pageList();
+						emit("refreshCount");
 					});
 				}
 			}

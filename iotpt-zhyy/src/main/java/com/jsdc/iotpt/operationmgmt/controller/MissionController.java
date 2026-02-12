@@ -98,7 +98,7 @@ public class MissionController {
         List<MissionVo> records = missionService.missionExcel(bean, bean.getPageIndex(), bean.getPageSize());
         if (CollUtil.isNotEmpty(records)) {
             ExcelWriter writer = ExcelUtil.getWriter();
-            writer.addHeaderAlias("levelsName", "紧急程度");
+            writer.addHeaderAlias("urgencyName", "紧急程度");
             writer.addHeaderAlias("sourceName", "来源");
             writer.addHeaderAlias("taskTypeName", "任务类型");
             writer.addHeaderAlias("title", "标题");

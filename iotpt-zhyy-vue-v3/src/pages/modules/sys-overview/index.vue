@@ -7,19 +7,19 @@
 						<div class="flex over-records">
 							<div class="over-records-item mb-8px">
 								<div class="over-records-item-title">登录次数:</div>
-								<div class="over-records-item-num">8365</div>
+								<div class="over-records-item-num">{{ loginRecords.loginCount }}</div>
 							</div>
 							<div class="over-records-item mb-8px">
 								<div class="over-records-item-title">上次登录IP:</div>
-								<div class="over-records-item-num">165.125.12.45</div>
+								<div class="over-records-item-num">{{ loginRecords.logIp }}</div>
 							</div>
 							<div class="over-records-item">
 								<div class="over-records-item-title">上次登录地址:</div>
-								<div class="over-records-item-num">江苏省徐州市</div>
+								<div class="over-records-item-num">{{ loginRecords.logLocation }}</div>
 							</div>
 							<div class="over-records-item">
 								<div class="over-records-item-title">上次登录时间:</div>
-								<div class="over-records-item-num">2025-12-12 10:00:00</div>
+								<div class="over-records-item-num">{{ loginRecords.logTime }}</div>
 							</div>
 						</div>
 						<div class="flex items-center over-date-con">
@@ -44,29 +44,31 @@
 							<div class="filter-form flex items-center">
 								<div class="flex items-center justify-between sys-status-item">
 									<div class="sys-status-item-title">运行</div>
-									<div class="sys-status-item-num">2332</div>
+									<div class="sys-status-item-num">{{ deviceStats.waterOnlineCounts }}</div>
 								</div>
-								<div class="flex items-center sys-status-item">
+								<div class="flex items-center justify-between sys-status-item">
 									<div class="sys-status-item-title danger">离线</div>
-									<div class="sys-status-item-num">2332</div>
+									<div class="sys-status-item-num">{{ deviceStats.waterOfflineCounts }}</div>
 								</div>
-								<el-button :icon="Refresh" @click="handleReset">刷新</el-button>
+								<el-button :icon="Refresh" @click="handleSystemRefresh">刷新</el-button>
 							</div>
 						</template>
 						<div class="flex items-center sys-status-summary gap-12px">
 							<div class="tatus-summary-item">
 								<img src="@/assets/images/setting/sys-icon1.png" class="w-143px h-145px" alt="icon" />
 								<div class="sys-status-summary-item-num">
-									<span class="online-num">103</span>/
-									<span class="offline-num">20</span>
+									<span class="online-num">{{ deviceStats.waterOnlineCount }}</span
+									>/
+									<span class="offline-num">{{ deviceStats.waterOfflineCount }}</span>
 								</div>
 								<div class="sys-status-summary-item-title">智慧水表</div>
 							</div>
 							<div class="tatus-summary-item">
 								<img src="@/assets/images/setting/sys-icon2.png" class="w-143px h-145px" alt="icon" />
 								<div class="sys-status-summary-item-num">
-									<span class="online-num">103</span>/
-									<span class="offline-num">20</span>
+									<span class="online-num">{{ deviceStats.waterDetectorOnlineCount }}</span
+									>/
+									<span class="offline-num">{{ deviceStats.waterDetectorOfflineCount }}</span>
 								</div>
 								<div class="sys-status-summary-item-title">漏水检测仪</div>
 							</div>
@@ -212,6 +214,29 @@
 	import StructureCard from "@/components/card/StructureCard";
 	import { Search, Refresh } from "@element-plus/icons-vue";
 	import WaterContrastLine from "./components/WaterContrastLine.vue";
+	import { getCenterData } from "@/api/setting/overView";
+	import { ElMessage } from "element-plus";
+	// 登录记录数据
+	const loginRecords = reactive({
+		loginCount: 0,
+		logIp: "",
+		logLocation: "",
+		logTime: ""
+	});
+
+	// 设备统计数据
+	const deviceStats = reactive({
+		waterOnlineCount: 0, // 智慧水表在线数量
+		waterOfflineCount: 0, // 智慧水表离线数量
+		waterDetectorOnlineCount: 0, // 漏水检测仪在线数量
+		waterDetectorOfflineCount: 0, // 漏水检测仪离线数量
+		waterOnlineCounts: 0, // 总运行数量
+		waterOfflineCounts: 0 // 总离线数量
+	});
+
+	// 工单数量
+	const orderCount = ref(0);
+
 	// 日期类型：年/月/日
 	const dateType = ref("date");
 	// 添加日期时间相关的响应式数据
@@ -246,6 +271,7 @@
 		timeInterval.value = setInterval(() => {
 			currentDate.value = new Date();
 		}, 1000);
+		getOverviewData();
 	});
 
 	// 组件卸载时清除定时器
@@ -254,6 +280,48 @@
 			clearInterval(timeInterval.value);
 		}
 	});
+	// 获取概览数据
+	const getOverviewData = async () => {
+		try {
+			const res = await getCenterData();
+
+			// 更新登录记录
+			loginRecords.loginCount = res.loginCount || 0;
+			loginRecords.logIp = res.logIp || "";
+			loginRecords.logLocation = res.logLocation || "";
+			loginRecords.logTime = res.logTime || "";
+
+			// 更新设备统计
+			deviceStats.waterOnlineCount = res.waterOnlineCount || 0;
+			deviceStats.waterOfflineCount = res.waterOfflineCount || 0;
+			deviceStats.waterDetectorOnlineCount = res.waterDetectorOnlineCount || 0;
+			deviceStats.waterDetectorOfflineCount = res.waterDetectorOfflineCount || 0;
+			deviceStats.waterOnlineCounts = res.waterOnlineCounts || 0;
+			deviceStats.waterOfflineCounts = res.waterOfflineCounts || 0;
+
+			// 更新工单数量
+			orderCount.value = res.orderCount || 0;
+		} catch (error) {
+			console.error("获取概览数据失败:", error);
+		}
+	};
+	// 刷新设备统计数据
+	const handleSystemRefresh = async () => {
+		try {
+			const res = await getCenterData({});
+
+			// 更新设备统计
+			deviceStats.waterOnlineCount = res.waterOnlineCount || 0;
+			deviceStats.waterOfflineCount = res.waterOfflineCount || 0;
+			deviceStats.waterDetectorOnlineCount = res.waterDetectorOnlineCount || 0;
+			deviceStats.waterDetectorOfflineCount = res.waterDetectorOfflineCount || 0;
+			deviceStats.waterOnlineCounts = res.waterOnlineCounts || 0;
+			deviceStats.waterOfflineCounts = res.waterOfflineCounts || 0;
+			ElMessage.success("刷新设备统计数据成功");
+		} catch (error) {
+			console.error("刷新设备统计数据失败:", error);
+		}
+	};
 
 	// 查询参数对象
 	const queryParams = reactive({
@@ -349,7 +417,6 @@
 			border-radius: 4px 4px 4px 4px;
 			border: 1px solid rgba(0, 0, 0, 0.15);
 			.sys-status-item-title {
-				margin-right: 20px;
 				display: flex;
 				align-items: center;
 				color: #666;

@@ -43,10 +43,11 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 列表查询
+     *
      * @param menu
      * @return
      */
-    public List<SysMenu> getMenuList(SysMenu menu){
+    public List<SysMenu> getMenuList(SysMenu menu) {
         LambdaQueryWrapper<SysMenu> wrapper = getWrapper(menu);
         List<SysMenu> list = baseMapper.selectList(wrapper);
         return list;
@@ -54,12 +55,13 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 分页查询
+     *
      * @param menu
      * @param pageIndex
      * @param pageSize
      * @return
      */
-    public Page<SysMenu> getMenuPage(SysMenu menu, Integer pageIndex, Integer pageSize){
+    public Page<SysMenu> getMenuPage(SysMenu menu, Integer pageIndex, Integer pageSize) {
         Page page = new Page(pageIndex, pageSize);
         Page<SysMenu> p = baseMapper.selectPage(page, getWrapper(menu));
         return p;
@@ -67,10 +69,11 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 查询菜单信息
+     *
      * @param menu
      * @return
      */
-    public SysMenu getMenu(SysMenu menu){
+    public SysMenu getMenu(SysMenu menu) {
         LambdaQueryWrapper<SysMenu> wrapper = getWrapper(menu);
         SysMenu m = getOne(wrapper);
         return m;
@@ -78,10 +81,11 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 查询菜单树
+     *
      * @param menu
      * @return
      */
-    public List<Tree<String>> getMenuTree(SysMenu menu){
+    public List<Tree<String>> getMenuTree(SysMenu menu) {
         List<SysMenu> list = baseMapper.selectList(getWrapper(menu));
         TreeNodeConfig config = new TreeNodeConfig();
         config.setNameKey("id");
@@ -96,35 +100,36 @@ public class SysMenuService extends BaseService<SysMenu> {
         return treeNodes;
     }
 
-    public List<SysMenuVo> getMenuTree1(SysMenu menu){
+    public List<SysMenuVo> getMenuTree1(SysMenu menu) {
         List<SysMenu> list = baseMapper.selectList(getWrapper(menu).orderByAsc(SysMenu::getSort));
         List<SysMenuVo> menus1 = new ArrayList<>();
         for (SysMenu menu1 : list) {
             SysMenuVo menuVo = new SysMenuVo();
-            BeanUtil.copyProperties(menu1,menuVo);
+            BeanUtil.copyProperties(menu1, menuVo);
             menus1.add(menuVo);
         }
         int topId = 0;
-        if(CollectionUtils.isNotEmpty(menus1)){
-            topId = Integer.parseInt(menus1.get(0).getParentId());
+        if (CollectionUtils.isNotEmpty(menus1)) {
+            topId = menus1.get(0).getParentId();
 
-            for(SysMenuVo sysMenuVo : menus1){
-                if(Integer.parseInt(sysMenuVo.getParentId()) < topId){
-                    topId = Integer.parseInt(sysMenuVo.getParentId());
+            for (SysMenuVo sysMenuVo : menus1) {
+                if (sysMenuVo.getParentId() < topId) {
+                    topId = sysMenuVo.getParentId();
                 }
             }
         }
-        return TreeParserUtils.getTreeList(String.valueOf(topId),menus1);
+        return TreeParserUtils.getTreeList(String.valueOf(topId), menus1);
     }
 
     /**
      * 新增菜单
+     *
      * @param menu
      * @return
      */
-    public Boolean addMenu(@NonNull SysMenu menu){
+    public Boolean addMenu(@NonNull SysMenu menu) {
         menu.setIsDel(G.ISDEL_NO);
-        if(null == menu.getParentId()){
+        if (null == menu.getParentId()) {
             menu.setParentId(G.NULL_PARENT_ID);
         }
 //        menu.setCreateUser(userService.getUser().getId());
@@ -136,10 +141,11 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 编辑菜单
+     *
      * @param menu
      * @return
      */
-    public Boolean editMenu(@NonNull SysMenu menu){
+    public Boolean editMenu(@NonNull SysMenu menu) {
         int id = menu.getId();
         SysMenu orignal = getById(id);
         BeanUtil.copyProperties(menu, orignal, CopyOptions.create().setIgnoreCase(true).ignoreNullValue());
@@ -155,10 +161,11 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 删除菜单
+     *
      * @param id
      * @return
      */
-    public Boolean delMenu(Integer id){
+    public Boolean delMenu(Integer id) {
         LambdaUpdateWrapper<SysMenu> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysMenu::getIsDel, G.ISDEL_YES)
                 .eq(SysMenu::getId, id);
@@ -167,12 +174,13 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 封装查询条件
+     *
      * @param menu
      * @return
      */
-    private LambdaQueryWrapper<SysMenu> getWrapper(SysMenu menu){
+    private LambdaQueryWrapper<SysMenu> getWrapper(SysMenu menu) {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
-        if(null != menu){
+        if (null != menu) {
             wrapper.eq(null != menu.getId(), SysMenu::getId, menu.getId());
             wrapper.like(StringUtils.isNotEmpty(menu.getTitle()), SysMenu::getTitle, menu.getTitle());
             wrapper.eq(null != menu.getSystemId(), SysMenu::getSystemId, menu.getSystemId());
@@ -185,6 +193,7 @@ public class SysMenuService extends BaseService<SysMenu> {
 
     /**
      * 修改菜单状态
+     *
      * @param menu
      * @return
      */
@@ -210,7 +219,7 @@ public class SysMenuService extends BaseService<SysMenu> {
                 ids.addAll(finalIds);
             }
             ids = ids.stream().distinct().collect(Collectors.toList());
-        }else {
+        } else {
             // 显示菜单,查看父级菜单是否隐藏
             SysMenu sysMenu = getById(menu.getId());
             if (null != sysMenu && null != sysMenu.getParentId()) {
@@ -225,12 +234,13 @@ public class SysMenuService extends BaseService<SysMenu> {
 
         LambdaUpdateWrapper<SysMenu> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysMenu::getIsShow, menu.getIsShow())
-                .in(SysMenu::getId,ids);
+                .in(SysMenu::getId, ids);
         return update(updateWrapper);
     }
 
     /**
      * 根据类型得到菜单树
+     *
      * @param menu
      * @return
      */

@@ -48,7 +48,24 @@ export default defineComponent({
       valdata: {
           type: [Object, Array] as PropType<any>,
           default: () => ({})
+      },
+      // 添加缺少的props定义
+      areaIds: {
+          type: Array as PropType<string[]>,
+          default: () => []
+      },
+      startTime: {
+          type: String as PropType<string>,
+          default: ''
+      },
+      endTime: {
+          type: String as PropType<string>,
+          default: ''
       }
+  },
+  // 添加组件注册
+  components: {
+    Title
   },
   setup(props) {
       const chartEl = ref<HTMLDivElement | null>(null);
@@ -231,10 +248,10 @@ export default defineComponent({
 
       // 加载数据
       const loadData = async () => {
-          // 从 mixin 中获取数据
-          const areaIds = (this as any).areaIds;
-          const startTime = (this as any).startTime;
-          const endTime = (this as any).endTime;
+          // 从props获取数据，替换this访问方式
+          const areaIds = props.areaIds;
+          const startTime = props.startTime;
+          const endTime = props.endTime;
           
           if (areaIds && areaIds.length > 0) {
               try {
@@ -254,6 +271,11 @@ export default defineComponent({
               initChart();
           }
       };
+
+      // 添加对关键参数变化的监听
+      watch([() => props.areaIds, () => props.startTime, () => props.endTime], () => {
+          loadData();
+      }, { deep: true });
 
       // 组件挂载
       onMounted(() => {

@@ -1,5 +1,6 @@
 <template>
     <div>
+        <!-- 修改：添加缺失的 props 定义 -->
         <Title :index="index" :title="title" :subTitle="subTitle" :subIndex="subIndex" />
         <div class="module-item-desc">
             本周期内，共有 
@@ -66,7 +67,8 @@
                 align="center"
             >
                 <template #default="scope">
-                    {{ scope.$index + 1 }}
+                    <!-- 修改：使用 $index 替代 scope.$index -->
+                    {{ $index + 1 }}
                 </template>
             </el-table-column>
             <el-table-column 

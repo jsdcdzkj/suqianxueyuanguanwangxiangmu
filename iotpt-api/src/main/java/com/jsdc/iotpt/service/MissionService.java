@@ -7,7 +7,6 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.aspose.words.WarningInfo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -103,8 +102,8 @@ public class MissionService extends BaseService<Mission> {
     private SysFileService fileService;
     @Autowired
     private SysUserMapper userMapper;
-    @Autowired
-    private AppPushMsgService appPushMsgService;
+//    @Autowired
+//    private AppPushMsgService appPushMsgService;
     @Autowired
     private MissionConsumableMapper consumableMapper;
     @Autowired
@@ -226,7 +225,7 @@ public class MissionService extends BaseService<Mission> {
                 if (null != mission.getHandleId()) {
                     msgVo.setUserIdList(Collections.singletonList(mission.getHandleId()));
                 }
-                appPushMsgService.pushMsg(msgVo);
+//                appPushMsgService.pushMsg(msgVo);
             } else {
                 mission.setStates(7);
                 mission.setHandleStatus(2);
@@ -237,7 +236,7 @@ public class MissionService extends BaseService<Mission> {
                 if (null != mission.getHandleId()) {
                     msgVo.setUserIdList(Collections.singletonList(mission.getHandleId()));
                 }
-                appPushMsgService.pushMsg(msgVo);
+//                appPushMsgService.pushMsg(msgVo);
             }
             mission.setUpdateUser(userService.getUser().getId());
             mission.setUpdateTime(new Date());
@@ -282,7 +281,7 @@ public class MissionService extends BaseService<Mission> {
         AppPushMsgVo msgVo = new AppPushMsgVo();
         msgVo.setAppConfigCode("GONGDN_BOHUI");
         msgVo.setUserIdList(Collections.singletonList(getById(bean.getId()).getCreateUser()));
-        appPushMsgService.pushMsg(msgVo);
+//        appPushMsgService.pushMsg(msgVo);
     }
 
     /**
@@ -528,7 +527,7 @@ public class MissionService extends BaseService<Mission> {
         msgVo.setAppConfigCode("TEAMWORK_REPAIRS_ASSIGN");
         List<SysUser> sysUsers = userMapper.getUsersByRole("app_rw_zp");
         msgVo.setUserIdList(sysUsers.stream().map(SysUser::getId).collect(Collectors.toList()));
-        appPushMsgService.pushMsg(msgVo);
+//        appPushMsgService.pushMsg(msgVo);
         return true;
     }
 
@@ -767,7 +766,7 @@ public class MissionService extends BaseService<Mission> {
                     msgVo.setAppConfigCode("SYSTEM_REPAIRS_RESULT");
                     String[] prepares = {String.valueOf(bean.getUserId())};
                     msgVo.setUserIdList(Arrays.stream(prepares).map(Integer::parseInt).collect(Collectors.toList()));
-                    appPushMsgService.pushMsg(msgVo);
+//                    appPushMsgService.pushMsg(msgVo);
                 }
                 return true;
             }
@@ -816,7 +815,7 @@ public class MissionService extends BaseService<Mission> {
                     msgVo.setAppConfigCode("SYSTEM_REPAIRS_NOTICE_A");
                     msgVo.setTime(DateUtils.dateToStr(mission.getCreateTime()));
                     msgVo.setUserIdList(Collections.singletonList(mission.getCreateUser()));
-                    appPushMsgService.pushMsg(msgVo);
+//                    appPushMsgService.pushMsg(msgVo);
                 }
 
             }
@@ -1971,7 +1970,7 @@ public class MissionService extends BaseService<Mission> {
                     taskTypes = sysDictService.getBaseMapper().selectList(new LambdaQueryWrapper<SysDict>()
                             .eq(SysDict::getIsDel, 0)
                             .eq(SysDict::getDictType, "taskTypes")
-                            .eq(SysDict::getDictValue, missionAssigns.get(0).getTaskType())
+                            .eq(SysDict::getDictValue, missionAssigns.get(0).getTaskType()+"")
                     );
                     if (CollUtil.isNotEmpty(taskTypes)) {
                         record.setTaskTypeName(taskTypes.get(0).getDictLabel());
@@ -2083,7 +2082,7 @@ public class MissionService extends BaseService<Mission> {
         msgVo.setAppConfigCode("TEAMWORK_REPAIRS_ASSIGN");
         List<SysUser> sysUsers = userMapper.getUsersByRole("app_rw_zp");
         msgVo.setUserIdList(sysUsers.stream().map(SysUser::getId).collect(Collectors.toList()));
-        appPushMsgService.pushMsg(msgVo);
+//        appPushMsgService.pushMsg(msgVo);
         return true;
     }
 

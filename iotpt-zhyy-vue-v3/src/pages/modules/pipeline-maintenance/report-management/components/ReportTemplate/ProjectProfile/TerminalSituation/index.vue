@@ -98,15 +98,10 @@
   // 加载状态（可选，为表格添加加载动画，提升交互体验）
   const loading = ref(false)
   
-  // 保留原组件的cname标识（父组件<component :is="child.type">动态渲染必备）
-  defineExpose({
-	cname: '终端情况'
-  })
-  
   // ===================== 生命周期 & 核心业务逻辑 =====================
   onMounted(async () => {
 	// 替代Vue2的this.$nextTick，确保DOM渲染完成后请求数据
-	await nextTick()
+	console.log('终端mounted', props)
 	// 区域ID数组无值时，不发起请求，直接返回
 	if (props.areaIds.length === 0) return
   
@@ -119,7 +114,9 @@
 		endTime: props.endTime,
 		timeType: props.timeType
 	  })
-	  const resData = res.data as CmdInfoResponseData
+	  console.log('终端情况', res)
+
+	  const resData = res as CmdInfoResponseData
 	  // 处理接口返回数据：对象转数组，和原逻辑完全一致
 	  const tableData: TerminalItem[] = []
 	  // TS规范遍历对象key，替代for...in（避免遍历原型链属性）

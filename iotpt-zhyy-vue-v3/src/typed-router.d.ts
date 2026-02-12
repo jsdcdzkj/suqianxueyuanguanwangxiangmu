@@ -19,7 +19,11 @@ declare module 'vue-router/auto-routes' {
    */
   export interface RouteNamedMap {
     '/alarm-center/alarm-center-page/': RouteRecordInfo<'/alarm-center/alarm-center-page/', '/alarm-center/alarm-center-page', Record<never, never>, Record<never, never>>,
-    '/alarm-center/alarm-center-page/components/notice/': RouteRecordInfo<'/alarm-center/alarm-center-page/components/notice/', '/alarm-center/alarm-center-page/components/notice', Record<never, never>, Record<never, never>>,
+    '/alarm-center/alarm-center-page/components/aiAnalysis': RouteRecordInfo<'/alarm-center/alarm-center-page/components/aiAnalysis', '/alarm-center/alarm-center-page/components/aiAnalysis', Record<never, never>, Record<never, never>>,
+    '/alarm-center/alarm-center-page/components/batchDeal': RouteRecordInfo<'/alarm-center/alarm-center-page/components/batchDeal', '/alarm-center/alarm-center-page/components/batchDeal', Record<never, never>, Record<never, never>>,
+    '/alarm-center/alarm-center-page/components/manualJudgment': RouteRecordInfo<'/alarm-center/alarm-center-page/components/manualJudgment', '/alarm-center/alarm-center-page/components/manualJudgment', Record<never, never>, Record<never, never>>,
+    '/alarm-center/alarm-center-page/components/taskLine': RouteRecordInfo<'/alarm-center/alarm-center-page/components/taskLine', '/alarm-center/alarm-center-page/components/taskLine', Record<never, never>, Record<never, never>>,
+    '/alarm-center/alarm-center-page/components/view': RouteRecordInfo<'/alarm-center/alarm-center-page/components/view', '/alarm-center/alarm-center-page/components/view', Record<never, never>, Record<never, never>>,
     '/alarm-center/alarm-center-page/echarts/taskLine': RouteRecordInfo<'/alarm-center/alarm-center-page/echarts/taskLine', '/alarm-center/alarm-center-page/echarts/taskLine', Record<never, never>, Record<never, never>>,
     '/alarm-center/alarm-overview/': RouteRecordInfo<'/alarm-center/alarm-overview/', '/alarm-center/alarm-overview', Record<never, never>, Record<never, never>>,
     '/alarm-center/alarm-overview/components/alarm-deal': RouteRecordInfo<'/alarm-center/alarm-overview/components/alarm-deal', '/alarm-center/alarm-overview/components/alarm-deal', Record<never, never>, Record<never, never>>,

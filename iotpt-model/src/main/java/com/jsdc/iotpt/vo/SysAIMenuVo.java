@@ -8,13 +8,13 @@ import java.util.List;
 
 @Setter
 @Getter
-public class SysAIMenuVo implements TreeEntity<SysAIMenuVo>{
+public class SysAIMenuVo implements TreeEntity<SysAIMenuVo> {
 
     private static final long serialVersionUID = 1L;
 
-    private String id;
+    private Integer id;
 
-    private String parentId;
+    private Integer parentId;
 
     private String title;
 

@@ -150,6 +150,23 @@ public class MinioTemplate implements InitializingBean {
     }
 
     /**
+     * 判断文件是否存在
+     *
+     * @param bucketName bucket名称
+     * @param objectName 文件名称
+     * @return true 存在, false 不存在
+     */
+    @SneakyThrows
+    public boolean objectExists(String bucketName, String objectName) {
+        try {
+            client.statObject(bucketName, objectName);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * 删除文件
      *
      * @param bucketName bucket名称

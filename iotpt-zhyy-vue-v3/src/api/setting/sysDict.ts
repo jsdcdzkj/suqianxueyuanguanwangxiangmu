@@ -5,3 +5,5 @@ export const getRedisDictList = (data: any) => request.post("/sysDict/getRedisDi
 
 // 获取字典选择列表
 export const selectDictList = (data: any) => request.post("/sysDict/selectDictList", {}, { params: data });
+
+export const getDictByKey = (data: any) => request.post("/sysDict/getRedisDictMap", {}, { params: data });

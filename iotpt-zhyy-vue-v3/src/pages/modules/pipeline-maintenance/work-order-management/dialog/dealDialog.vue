@@ -44,7 +44,7 @@
 				}}</ElDescriptionsItem>
 			</ElDescriptions>
 		</template>
-		<div class="base-title m-t-12px" v-if="assignLength > 0">指派信息</div>
+		<div class="base-title m-t-12px" v-if="assigns.length > 0">指派信息</div>
 		<ElDescriptions :column="2" border label-width="120px" v-for="(assign, index) in assigns" :key="index">
 			<ElDescriptionsItem label="任务类型" label-class-name="my-label">{{
 				assign.taskTypeName || "--"
@@ -70,37 +70,113 @@
 			</ElTable>
 		</template>
 		<div class="base-title m-t-12px">处理信息</div>
-		<BaseForm v-bind="form" />
+		<ElForm ref="formInstance" :model="form" :rules="rules" label-width="90px" class="self-form-task" label-position="left">
+            <ElRow :gutter="20">
+				<ElCol :span="24">
+					<ElFormItem label="指派处理人">
+						<ElInput v-model="assignUser" type="text" readonly autocomplete="off"></ElInput>
+					</ElFormItem>
+				</ElCol>
+				<ElCol :span="24">
+					<ElFormItem label="处理信息" prop="crunch">
+						<ElInput v-model="form.crunch" type="textarea" autocomplete="off"></ElInput>
+					</ElFormItem>
+				</ElCol>
+				<ElCol :span="12">
+            		<ElFormItem label="处理人" prop="handleId">
+						<ElSelect v-model="form.handleId" clearable style="width: 100%">
+							<ElOption
+								v-for="item in groupUsers"
+								:key="item.userId"
+								:label="item.realName"
+								:value="item.userId"
+									></ElOption>
+                        </ElSelect>
+                    </ElFormItem>
+                </ElCol>
+                <ElCol :span="12">
+                    <ElFormItem label="截至时间" prop="startTime">
+                        <ElDatePicker
+							style="width: 100%"
+                            v-model="form.startTime"
+                            value-format="YYYY-MM-DD HH:mm:ss"
+                            type="datetime"
+                        ></ElDatePicker>
+                    </ElFormItem>
+                </ElCol>
+                <ElCol :span="12">
+                    <ElFormItem label="协助人" prop="assistHandleIds" style="width: 100%">
+                        <ElSelect v-model="form.assistHandleIds" clearable>
+                            <ElOptionGroup
+                                v-for="group in groupsList"
+                                :key="group.label"
+                                :label="group.label">
+                                <ElOption
+                                    v-for="item in group.options"
+                                    :key="item.id"
+                                    :label="item.realName"
+                                    :value="item.groupId+'-'+item.userId">
+                                </ElOption>
+                            </ElOptionGroup>
+                        </ElSelect>
+                    </ElFormItem>
+                </ElCol>
+            </ElRow>
+        </ElForm>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
 import { number } from "vue-types";
-import BaseForm from "@/core/struct/form/base-form";
-import { tobeAssigned, teamGroupsAllList, inspectionData } from "@/api/pipeline-maintenance/work-order";
-import { useDialogStructForm } from "@/core/struct/form/use-base-form";
+import { tobeAssigned, teamGroupsAllList, teamGroupsList1, inspectionData, waitHandle } from "@/api/pipeline-maintenance/work-order";
+import { useDialogForm } from "@/core/dialog/dialog-container";
 import { getRedisDictList, selectMissionDictAll } from "@/api/common/common";
-import { ElDescriptions, ElDescriptionsItem, ElPagination, ElTable, ElTableColumn, ElButton } from "element-plus";
+import { ElDescriptions, ElDescriptionsItem, ElTable, ElTableColumn, ElInput, ElForm, ElFormItem, ElSelect, ElOption, ElOptionGroup, ElDatePicker, ElMessage, ElRow,ElCol } from "element-plus";
 
 const props = defineProps({
-	id: number().def()
+	id: number().def(0)
+});
+const rules = {
+	crunch: [{ required: true, trigger: "blur", message: "请输入处理信息内容" }],
+	handleId: [{ required: true, trigger: "blur", message: "请选择处理人" }],
+	startTime: [{ required: true, trigger: "blur", message: "请选择处理时间" }]
+}
+const form = ref({
+	handleId: "",
+	assistHandleIds: [],
+	startTime: "",
+	crunch: ""
+});
+const { registerFormDone, formInstance } = useDialogForm();
+registerFormDone(async () => {
+	console.log("66666666", form.value);
+	const valid = await formInstance.value?.validate();
+	if (!valid) {
+		throw '请填写完整处理信息'
+	};
+	let assistHandleIds = form.value.assistHandleIds.split('-')[1]
+	console.log('assistHandleIds',assistHandleIds)
+	const res = await waitHandle({ ...form.value, id: props.id, missionId: props.id, type: 2,assistHandleIds });
+	return res;
 });
 
 // 班组数据
 const groupsList = ref([]);
 const getAllgroundList = () => {
-	teamGroupsAllList().then((res) => {
+	teamGroupsList1({}).then((res) => {
+		console.log('9999999999999res', res)
 		groupsList.value = [];
 		// 先处理一下班组数据
-		for (let key in res.data) {
-			res.data[key] = res.data[key].filter((val) => val.realName);
-			if (res.data[key].length == 0) delete res.data[key];
+		for (let key in res) {
+			console.log('7777777777777key', key, res)
+			res[key] = res[key].filter((val) => val.realName);
+			if (res[key].length == 0) delete res[key];
 		}
-		for (let key in res.data) {
+		for (let key in res) {
 			groupsList.value.push({
 				label: key,
-				options: res.data[key]
+				options: res[key]
 			});
 		}
 	});
@@ -108,7 +184,6 @@ const getAllgroundList = () => {
 getAllgroundList();
 
 // 详情页数据
-const assignLength = ref(0);
 const imageUrls = ref([]);
 const detail = ref({});
 const assigns = ref([]);
@@ -117,15 +192,16 @@ const groupUsers = ref([]);
 const imageSize = ref([]);
 
 if (props.id) {
-	inspectionData({ missionId: row }).then((res) => {
-		var data = res.data;
+	inspectionData({ missionId: props.id }).then((res) => {
+		var data = res;
 		detail.value = data.bean; //上报信息
 		assigns.value = data.assigns; //指派信息
 		if (data.assignUser.length > 0) {
 			//指派人员
 			assignUser.value = data.assignUser.substring(0, data.assignUser.lastIndexOf("、"));
 		}
-		groupUsers.value = data.groupUsers; //获取处理人员
+		//获取处理人员
+		groupUsers.value = data.groupUsers;
 		var files = detail.value.fileList;
 		imageUrls.value = [];
 		for (const key in files) {
@@ -139,119 +215,6 @@ if (props.id) {
 		imageSize.value = imageUrls.value;
 	});
 }
-const { form, registerFormDone } = useDialogStructForm({
-	labelWidth: 100,
-	span: 12,
-	expandSpan: 6,
-	notMargn: false,
-	inline: false,
-	showExpand: false,
-	showMessage: true,
-	labelPosition: "left",
-	formItems: [
-		{
-			label: "指派处理人",
-			prop: "assignUser",
-			value: "",
-			type: "ElInput",
-			span: 24,
-			attrs: {
-				placeholder: "请输入指派处理人",
-			}
-		},
-		{
-			label: "处理信息",
-			prop: "crunch",
-			value: "",
-			type: "ElInput",
-			span: 24,
-			attrs: {
-				type: "textarea",
-				placeholder: "请输入处理信息",
-				maxlength: 200,
-				row:4
-			}
-		},
-		{
-			type: "ElSelect",
-			value: "",
-			prop: "handleId",
-			label: "处理人",
-			attrs: {
-				placeholder: "请选择处理人",
-				clearable: true
-			},
-			select: {
-				type: "ElOption",
-				label: "realName",
-				value: "userId",
-				list: groupUsers.value
-			}
-		},
-		{
-			type: "ElDatePicker",
-			value: "",
-			label: "截止日期",
-			prop: "startTime",
-			attrs: {
-				type: "datetime",
-				placeholder: "截止日期",
-				valueFormat: "YYYY-MM-DD HH:mm:ss"
-			}
-		},
-		{
-			type: "ElSelect",
-			value: "",
-			prop: "assistHandleIds",
-			label: "协助人",
-			attrs: {
-				placeholder: "请选择协助人",
-				clearable: true
-			},
-			select: {
-				type: "ElOption",
-				label: "realName",
-				value: "userId", // 这点原来逻辑是拼上了groupId
-				list: groupsList.value
-			}
-		}
-	],
-	rules: {
-		handleId: [
-			{
-				required: true,
-				message: "请选择处理人",
-				trigger: "change"
-			}
-		],
-		crunch: [
-			{
-				required: true,
-				message: "请输入处理信息",
-				trigger: "blur"
-			}
-		],
-		startTime: [
-			{
-				required: true,
-				message: "请选择截止时间",
-				trigger: "blur"
-			}
-		],
-		taskGroup: [
-			{
-				required: true,
-				message: "请选择任务组",
-				trigger: "blur"
-			}
-		]
-	}
-});
-registerFormDone(async () => {
-	console.log("66666666", form.value);
-	const res = await tobeAssigned({ ...form.value, id: props.id });
-	return res;
-});
 </script>
 <style lang="scss" scoped>
 :deep(.my-label) {

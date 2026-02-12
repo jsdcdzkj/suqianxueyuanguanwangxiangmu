@@ -121,6 +121,12 @@
             <artifactId>javase</artifactId>
             <version>3.5.3</version>
         </dependency>
+        <dependency>
+            <groupId>com.dahuatech.icc</groupId>
+            <artifactId>java-sdk-common</artifactId>
+            <version>1.0.12.5</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

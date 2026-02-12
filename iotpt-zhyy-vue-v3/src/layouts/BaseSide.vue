@@ -51,12 +51,11 @@
 
 			// 获取当前一级菜单的子菜单
 			const parentRoute = route.matched[1];
-			const parentMenu = appInstance.userStore.menus.find((item) => item.fullPath === parentRoute.path);
+			const parentMenu = appInstance.userStore.menus;
 
 			if (!parentMenu) return;
-
 			// 更新子菜单和父级元信息
-			cRoutes.value = parentMenu.children || [];
+			cRoutes.value = parentMenu || [];
 			parentMeta.icon = parentRoute.meta.icon;
 			parentMeta.title = parentRoute.meta.title;
 

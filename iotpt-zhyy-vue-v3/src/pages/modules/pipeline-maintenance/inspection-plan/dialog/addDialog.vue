@@ -57,14 +57,12 @@ getTreeBuild().then(res => {
 })
 getTreeBuild()
 
-const dis = ()=> {
-	return true
-}
 const region = ref([]);
 const defaultProps = {
   children: 'children',
   label: 'label',
-  disabled: dis()
+  // 将disabled改为函数形式，使其能响应isDetail的变化
+  disabled: () => props.isDetail
 }
 
 const manageId = ref();
@@ -267,6 +265,7 @@ const { form:form1 } = useDialogStructForm({
 			append: (formData, item) => h(ElSelect, {
 				disabled: props.isDetail,
 				modelValue: formData.executeUint, // 绑定到表单数据的executeUint字段
+				placeholder: "单位",
 				"onUpdate:modelValue": (value) => {
 				formData.executeUint = value; // 更新表单数据
 				},
@@ -432,11 +431,11 @@ const { form: form2, registerFormDone } = useDialogStructForm({
 				trigger: "blur"
 			}
 		],
-		selectDays: [
+		cycleTime: [
 			{
 				required: true,
 				message: "请选择周期时间",
-				trigger: "blur"
+				trigger: "change"
 			}
 		],
 	},
@@ -446,6 +445,11 @@ const tree = ref()
 registerFormDone(async() => {
 	console.log('66666666', form1.value, form2.value)
 	var checkedList = tree.value.getCheckedNodes();
+	if (!manageId.value) {
+        ElMessage.error("请选择检查项");
+		throw '请选择检查项'
+        return;
+      }
       if (checkedList.length == 0) {
         ElMessage.error("请选择巡检范围");
 		throw '请选择巡检范围'

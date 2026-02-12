@@ -141,7 +141,7 @@ export default defineComponent({
 							<div class="flex-1 custom-table h-full flex flex-col w-full">
 								<div class="flex-1 flex flex-col w-full p-10px overflow-hidden">
 									{renderSlotPageHeader()}
-
+									{slots.pageBodySearch?.()}
 									{renderSlotPageSearch()}
 									{renderSlotPageBody()}
 								</div>

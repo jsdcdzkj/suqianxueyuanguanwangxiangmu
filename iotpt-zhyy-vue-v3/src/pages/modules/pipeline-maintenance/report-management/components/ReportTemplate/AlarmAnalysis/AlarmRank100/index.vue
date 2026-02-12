@@ -51,7 +51,7 @@ interface CommonMixinData {
 }
 
 export default defineComponent({
-    cname: "信号告警排行TOP10",
+    cname: "信号告警排行TOP100",
     name:'RankingChart100',
     mixins: [Common] as any,
     props: {

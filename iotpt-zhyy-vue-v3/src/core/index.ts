@@ -108,38 +108,39 @@ export const genPList = (element: any, list: any, fullPath: string, isRoot: bool
 		genPList(item, list, `${fullPath}/${item.path}`);
 	}
 };
-export const dynamicRouter = (router: Router, menuTrees: any[]) => {
-	// 获取跟路由
-	const rootPath = router.getRoutes().find((item) => item.path == "/");
-
-	let menus = coverPathRouter(menuTrees, "/", router, "Root", []);
-
-	for (let i = 0; i < menus.length; i++) {
-		const element = menus[i];
-		const list: any[] = [];
-		genPList(element, list, element.path, true);
-		element.popoverList = list;
-	}
-
-	// 跟节点重定向到第一个菜单
-	if (rootPath) {
-		rootPath.redirect = menus[0].fullPath;
-	}
-	return menus;
-};
 // export const dynamicRouter = (router: Router, menuTrees: any[]) => {
 // 	// 获取跟路由
 // 	const rootPath = router.getRoutes().find((item) => item.path == "/");
 
-// 	// 添加路由并绑定页面
-// 	let menus = reconstructionRouter(menuTrees);
-// 	menus = coverPathRouter(menus, "/", router, "Root", []);
+// 	let menus = coverPathRouter(menuTrees, "/", router, "Root", []);
+
+// 	for (let i = 0; i < menus.length; i++) {
+// 		const element = menus[i];
+// 		const list: any[] = [];
+// 		genPList(element, list, element.path, true);
+// 		element.popoverList = list;
+// 	}
+
 // 	// 跟节点重定向到第一个菜单
 // 	if (rootPath) {
 // 		rootPath.redirect = menus[0].fullPath;
 // 	}
 // 	return menus;
 // };
+export const dynamicRouter = (router: Router, menuTrees: any[]) => {
+	// 获取跟路由
+	const rootPath = router.getRoutes().find((item) => item.path == "/");
+
+	// 添加路由并绑定页面
+	let menus = reconstructionRouter(menuTrees);
+	menus = coverPathRouter(menus, "/", router, "Root", []);
+	// 跟节点重定向到第一个菜单
+	if (rootPath) {
+		rootPath.redirect = menus[0].fullPath;
+	}
+	console.log("menus7777777777777:", menus);
+	return menus;
+};
 
 export const getAppContext = (): AppContext => {
 	// 使用inject函数获取AppContext

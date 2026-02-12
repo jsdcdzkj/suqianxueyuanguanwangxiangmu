@@ -56,7 +56,7 @@
 		formItems: [
 			{
 				prop: "username",
-				value: "liukaisheng",
+				value: "",
 				type: "ElInput",
 				span: 24,
 				attrs: {
@@ -71,7 +71,7 @@
 			},
 			{
 				prop: "password",
-				value: "Jsdc@2026",
+				value: "",
 				type: "ElInput",
 				span: 24,
 				attrs: {
@@ -99,7 +99,7 @@
 	const handleLogin = () => {
 		const formData = {
 			...form.value,
-			type: 1 // 动态添加 type 字段
+			type: 2
 		};
 		// 存储密码到 localStorage
 		localStorage.setItem("lastLoginPassword", formData.password);
@@ -107,7 +107,7 @@
 			if (res) {
 				try {
 					isLoading.value = true;
-					await userStore.actionLogin(form.value, router);
+					await userStore.actionLogin(formData, router);
 					await appStore.getMapDict();
 					// console.log(router.getRoutes());
 

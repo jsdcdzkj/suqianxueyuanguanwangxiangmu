@@ -136,7 +136,7 @@ public class JobPlanService extends BaseService<JobPlan> {
         bean.setCreateUser(sysUserService.getUser().getId());
         mapper.insert(bean);
 
-        bean.getAreaList().forEach(x->{
+        for (JobPlanArea x : bean.getAreaList()) {
             if (x.getType().equals("buildId")){
                 x.setBuildId(x.getRealId());
             }else if (x.getType().equals("floorId")){
@@ -147,8 +147,7 @@ public class JobPlanService extends BaseService<JobPlan> {
             x.setPlanId(bean.getId());
             x.setIsDel(0);
             planAreaMapper.insert(x);
-        });
-
+        }
 
         if (bean.getPlanStatus()==0){
             // 此处只针对当前时间处于计划开始与结束时间范围内的单次执行；其余根据动态cron生成，校验在cron内部做

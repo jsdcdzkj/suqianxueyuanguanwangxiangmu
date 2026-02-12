@@ -7,6 +7,7 @@
 	import Logo from "./logo.vue";
 	import { useUserStore } from "@/store/user";
 	import { UapiClient } from "uapi-sdk-typescript";
+	import { changePassword } from "@/api/setting/user";
 	const client = new UapiClient("https://uapis.cn");
 
 	const appContext = getAppContext();
@@ -51,13 +52,14 @@
 	const dialogVisible = ref(false);
 	// 使用对象来存储表单数据
 	const form = ref({
-		oldPassword: "",
-		newPassword: ""
+		oldPassWord: "",
+		password: "",
+		confirmPassword: ""
 	});
 
 	const rules = {
-		oldPassword: [{ required: true, message: "请输入旧密码", trigger: "blur" }],
-		newPassword: [
+		oldPassWord: [{ required: true, message: "请输入旧密码", trigger: "blur" }],
+		password: [
 			{ required: true, message: "请输入新密码", trigger: "blur" },
 			{ min: 8, message: "密码长度不能小于8位", trigger: "blur" },
 			{
@@ -66,7 +68,19 @@
 				trigger: "blur"
 			}
 		],
-		customerId: [{ required: true, message: "请选择客户", trigger: "blur" }]
+		confirmPassword: [
+			{ required: true, message: "请确认新密码", trigger: "blur" },
+			{
+				validator: (rule, value, callback) => {
+					if (value !== form.value.password) {
+						callback(new Error("两次输入的密码不一致"));
+					} else {
+						callback();
+					}
+				},
+				trigger: "blur"
+			}
+		]
 	};
 
 	const formRef = ref(null);
@@ -93,34 +107,34 @@
 		const seconds = String(date.getSeconds()).padStart(2, "0");
 		return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 	};
-	// onMounted(async () => {
-	// 	console.log(appContext?.userStore);
-	// 	loginName.value = appContext?.userStore.userInfo?.userName;
-	// 	realName.value = appContext?.userStore.userInfo?.realName;
-	// 	Phone.value = appContext?.userStore.userInfo?.phone;
-	// 	// await userStore.getUserInfo();
-	// 	// if (userStore.userInfo) {
-	// 	// 	loginName.value = userStore.userInfo.username;
-	// 	// 	realName.value = userStore.userInfo.sysUser.realName;
-	// 	// 	Phone.value = userStore.userInfo.sysUser.phone;
-	// 	// }
-	// 	// 获取存储的密码
-	// 	const lastLoginPassword = localStorage.getItem("lastLoginPassword");
-	// 	if (lastLoginPassword && isWeakPassword(lastLoginPassword)) {
-	// 		dialogVisible.value = true;
-	// 		isWeakPasswordDialog.value = true;
-	// 	}
-	// 	// else if (!appContext?.userStore.userInfo.customerId) {
-	// 	// 	customerVisible.value = true;
-	// 	// }
-	// 	// 添加定时器
-	// 	timer = setInterval(updateTime, 1000);
+	onMounted(async () => {
+		console.log(appContext?.userStore);
+		loginName.value = appContext?.userStore.userInfo?.userName;
+		realName.value = appContext?.userStore.userInfo?.realName;
+		Phone.value = appContext?.userStore.userInfo?.phone;
+		// await userStore.getUserInfo();
+		// if (userStore.userInfo) {
+		// 	loginName.value = userStore.userInfo.username;
+		// 	realName.value = userStore.userInfo.sysUser.realName;
+		// 	Phone.value = userStore.userInfo.sysUser.phone;
+		// }
+		// 获取存储的密码
+		const lastLoginPassword = localStorage.getItem("lastLoginPassword");
+		if (lastLoginPassword && isWeakPassword(lastLoginPassword)) {
+			dialogVisible.value = true;
+			isWeakPasswordDialog.value = true;
+		}
+		// else if (!appContext?.userStore.userInfo.customerId) {
+		// 	customerVisible.value = true;
+		// }
+		// 添加定时器
+		timer = setInterval(updateTime, 1000);
 
-	// 	// 获取天气信息
-	// 	getWeather();
-	// 	// 每30分钟更新一次天气
-	// 	setInterval(getWeather, 30 * 60 * 1000);
-	// });
+		// 获取天气信息
+		getWeather();
+		// 每30分钟更新一次天气
+		setInterval(getWeather, 30 * 60 * 1000);
+	});
 	onUnmounted(() => {
 		// 清除定时器
 		if (timer) {
@@ -132,17 +146,18 @@
 		if (!formRef.value) return;
 		try {
 			await formRef.value.validate();
-			// await pass({
-			//   password: form.value.oldPassword,
-			//   newPass: form.value.newPassword,
-			//   // loginName: loginName.value
-			// });
+			await changePassword({
+				// id: appContext?.userStore.userId,
+				oldPassWord: form.value.oldPassWord,
+				password: form.value.password
+			});
 			// 密码修改成功，清除存储的密码
 			localStorage.removeItem("lastLoginPassword");
 			// 清除关闭标记
 			hasClosedWeakPasswordDialog.value = false;
 			isWeakPasswordDialog.value = false;
 			dialogVisible.value = false;
+			handleLogout();
 		} catch (error) {
 			console.error("密码修改失败", error);
 		}
@@ -193,15 +208,13 @@
 	const getWeather = async () => {
 		try {
 			const payload = {
-				// city: "徐州",
-				// adcode: "320300", //徐州市行政区划代码
-				city: "宿迁",
-				adcode: "321300", // 宿迁市行政区划代码
+				city: "宿城区",
+				adcode: "321302", // 宿迁市宿城区行政区划代码
 				extended: true,
 				indices: false,
 				forecast: false
 			};
-			const response = await client.misc.getMiscWeather(payload);
+			const response = await (client as any).misc.getMiscWeather(payload);
 			if (response) {
 				weatherInfo.value = {
 					temperature: response.temperature + "℃",
@@ -292,11 +305,14 @@
 			</template>
 			<!-- 确保使用 #content 插槽 -->
 			<ElForm :model="form" :rules="rules" ref="formRef" label-width="80px" style="padding: 20px 30px 20px 20px">
-				<ElFormItem label="旧密码" prop="oldPassword">
-					<ElInput v-model="form.oldPassword" type="password" placeholder="请输入旧密码" />
+				<ElFormItem label="旧密码" prop="oldPassWord">
+					<ElInput v-model="form.oldPassWord" type="password" placeholder="请输入旧密码" />
 				</ElFormItem>
-				<ElFormItem label="新密码" prop="newPassword">
-					<ElInput v-model="form.newPassword" type="password" placeholder="请输入新密码" />
+				<ElFormItem label="新密码" prop="password">
+					<ElInput v-model="form.password" type="password" placeholder="请输入新密码" />
+				</ElFormItem>
+				<ElFormItem label="确认密码" prop="confirmPassword">
+					<ElInput v-model="form.confirmPassword" type="password" placeholder="请再次输入新密码" />
 					<div class="pwd-tips">
 						密码规则说明：<br />小写字母+大写字母+数字+特殊符号(@,$,!,%,*,?,&)+长度为8-16位！
 					</div>

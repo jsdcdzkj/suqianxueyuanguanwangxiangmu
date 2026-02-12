@@ -116,6 +116,12 @@
             <artifactId>thumbnailator</artifactId>
             <version>0.4.20</version>
         </dependency>
+        <dependency>
+            <groupId>com.jsdc</groupId>
+            <artifactId>iotpt-model</artifactId>
+            <version>0.0.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

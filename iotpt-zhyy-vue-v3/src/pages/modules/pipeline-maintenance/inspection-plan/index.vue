@@ -279,7 +279,7 @@
 	// 查看
 	const handleView = (row) => {
 		createDrawerAsync(
-			{ title: "详情", width: '960px', showNext: false },
+			{ title: "详情", width: '960px', showNext: false, showConfirm:false },
 			{},
 			<AddDialog isDetail={true} id={row.id} />
 		).then(() => {

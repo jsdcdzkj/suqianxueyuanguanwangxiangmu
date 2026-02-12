@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { defineComponent, PropType, ref, onMounted, onBeforeUnmount, nextTick, watch, getCurrentInstance } from "vue";
 import * as echarts from "echarts";
 import type { ECharts, EChartsOption, PieSeriesOption } from "echarts";
 import Common from "../../common.js";
@@ -38,14 +38,6 @@ interface WarnTypeItem {
   [key: string]: any;
 }
 
-interface CommonMixinData {
-  areaIds: string[] | number[];
-  startTime: string;
-  endTime: string;
-  valdata?: any;
-  [key: string]: any;
-}
-
 interface ApiResponse<T = any> {
   code: number;
   message: string;
@@ -61,10 +53,25 @@ export default defineComponent({
   cname: "告警类型统计",
   name:'TypesChart',
   mixins: [Common] as any,
+  components: {
+    Title
+  },
   props: {
       className: {
           type: String as PropType<string>,
           default: "chart"
+      },
+      areaIds: {
+          type: Array as PropType<string[] | number[]>,
+          default: () => []
+      },
+      startTime: {
+          type: String as PropType<string>,
+          default: ""
+      },
+      endTime: {
+          type: String as PropType<string>,
+          default: ""
       },
       width: {
           type: String as PropType<string>,
@@ -286,10 +293,8 @@ export default defineComponent({
       // 加载数据
       const loadData = async (): Promise<void> => {
           try {
-              // 获取 mixin 数据
-              const mixinData = (getCurrentInstance()?.proxy as any) as CommonMixinData;
               
-              if (!mixinData.areaIds || mixinData.areaIds.length === 0) {
+              if (!props.areaIds || props.areaIds.length === 0) {
                   initChart();
                   return;
               }
@@ -297,15 +302,15 @@ export default defineComponent({
               // 并行请求数据
               const [pieResponse, numsResponse] = await Promise.all([
                   getWarningType({
-                      startTime: mixinData.startTime,
-                      endTime: mixinData.endTime,
-                      areaIds: mixinData.areaIds,
+                      startTime: props.startTime,
+                      endTime: props.endTime,
+                      areaIds: props.areaIds,
                       tempId: props.chooseTemple
                   }) as Promise<ApiResponse<WarnTypeItem[]>>,
                   warningDataForNum({
-                      startTime: mixinData.startTime,
-                      endTime: mixinData.endTime,
-                      areaIds: mixinData.areaIds
+                      startTime: props.startTime,
+                      endTime: props.endTime,
+                      areaIds: props.areaIds
                   }) as Promise<ApiResponse<TypeNums>>
               ]);
               
@@ -404,21 +409,19 @@ export default defineComponent({
   methods: {
       // Vue 2 方法
       async loadChartData() {
-          const mixinData = this as any;
-          
-          if (mixinData.areaIds?.length > 0) {
+          if (this.areaIds?.length > 0) {
               try {
                   const [pieData, numsData] = await Promise.all([
                       getWarningType({
-                          startTime: mixinData.startTime,
-                          endTime: mixinData.endTime,
-                          areaIds: mixinData.areaIds,
+                          startTime: this.startTime,
+                          endTime: this.endTime,
+                          areaIds: this.areaIds,
                           tempId: this.chooseTemple
                       }),
                       warningDataForNum({
-                          startTime: mixinData.startTime,
-                          endTime: mixinData.endTime,
-                          areaIds: mixinData.areaIds
+                          startTime: this.startTime,
+                          endTime: this.endTime,
+                          areaIds: this.areaIds
                       })
                   ]);
                   
@@ -442,14 +445,9 @@ export default defineComponent({
 
 <style scoped>
 .module-item-desc {
-  margin-bottom: 20px;
-  padding: 16px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #666;
-  border-left: 4px solid #1890ff;
+    line-height: 1.8;
+    color: #333;
+    padding:16px 0;
 }
 
 .num {

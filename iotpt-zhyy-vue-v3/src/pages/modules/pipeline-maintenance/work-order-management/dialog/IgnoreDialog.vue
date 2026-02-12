@@ -36,7 +36,7 @@
 	});
 	registerFormDone(async() => {
 		console.log('66666666', form.value)
-		const res = await ignoreMission({ ...form.value, id: props.id });
+		const res = await ignoreMission({ ...form.value, id: props.id, isReads: 1, states: 6 });
 		return res;
 	});
 </script>

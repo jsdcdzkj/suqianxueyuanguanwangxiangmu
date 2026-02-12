@@ -5,7 +5,10 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.poi.excel.ExcelReader;
+import cn.hutool.poi.excel.ExcelUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -15,18 +18,18 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dahuatech.icc.exception.ClientException;
+import com.jsdc.common.minio.service.MinioTemplate;
 import com.jsdc.iotpt.base.BaseService;
 import com.jsdc.iotpt.common.G;
 import com.jsdc.iotpt.common.utils.RedisUtils;
 import com.jsdc.iotpt.init.RedisDataInit;
-import com.jsdc.iotpt.mapper.SysRoleMapper;
-import com.jsdc.iotpt.mapper.SysUserMapper;
-import com.jsdc.iotpt.mapper.TeamGroupUserMapper;
+import com.jsdc.iotpt.mapper.*;
 import com.jsdc.iotpt.model.*;
 import com.jsdc.iotpt.model.operate.TeamGroupUser;
 import com.jsdc.iotpt.model.sys.SysOrgDept;
 import com.jsdc.iotpt.model.sys.SysOrgManage;
 import com.jsdc.iotpt.util.MD5Utils;
+import com.jsdc.iotpt.util.MybatisBatchUtils;
 import com.jsdc.iotpt.util.TreeParserUtils;
 import com.jsdc.iotpt.util.exception.CustomException;
 import com.jsdc.iotpt.vo.*;
@@ -53,7 +56,6 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -108,6 +110,14 @@ public class SysUserService extends BaseService<SysUser> {
     private SysFileService sysFileService;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private MinioTemplate minioTemplate;
+    @Autowired
+    private SysOrgDeptMapper sysOrgDeptMapper;
+    @Autowired
+    private SysOrgManageMapper sysOrgManageMapper;
+    @Autowired
+    private MybatisBatchUtils mybatisBatchUtils;
 
     /**
      * 分页查询
@@ -709,15 +719,16 @@ public class SysUserService extends BaseService<SysUser> {
         //  },
 
         for (SysMenu menu : menus) {
-            RouterVo router = new RouterVo();
-            router.setId(String.valueOf(menu.getId()));
-            router.setParentId(String.valueOf(menu.getParentId()));
+            RouterVo router = BeanUtil.copyProperties(menu, RouterVo.class);
+//            router.setId(String.valueOf(menu.getId()));
+//            router.setParentId(String.valueOf(menu.getParentId()));
             router.setPath(menu.getRouterUrl());
             router.setName(menu.getRouterName());
             router.setRedirect(menu.getRedirectType());
             router.setComponent(menu.getVueUrl());
             router.setComponentUrl(menu.getVueUrl());
             router.setMeta(new MetaVo(menu.getTitle(), menu.getIcon()));
+
             routers.add(router);
         }
 
@@ -1214,11 +1225,184 @@ public class SysUserService extends BaseService<SysUser> {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("phone", sysUsers.getPhone());
         jsonObject.put("oldPassWord", oldPassWord);
-        ResponseEntity<String> stringResponseEntity = restTemplate.postForEntity("http://smartpark.dincher.cn/dctymh_api/getUserByPhoneAndPassword/", JSONObject.toJSONString(jsonObject), String.class);
-        String msg = JSONObject.parseObject(stringResponseEntity.getBody()).getString("msg");
-        if (msg == null || msg.equals("false")) {
-            return null;
-        }
+//        ResponseEntity<String> stringResponseEntity = restTemplate.postForEntity("http://smartpark.dincher.cn/dctymh_api/getUserByPhoneAndPassword/", JSONObject.toJSONString(jsonObject), String.class);
+//        String msg = JSONObject.parseObject(stringResponseEntity.getBody()).getString("msg");
+//        if (msg == null || msg.equals("false")) {
+//            return null;
+//        }
         return sysUsers;
+    }
+
+    /**
+     * 从文件导入用户
+     *
+     * @param minioId
+     * @return
+     */
+    public Map<String, Object> trimAllValues(Map<String, Object> map) {
+        map.forEach((k, v) -> map.put(k, null == v ? "" : v.toString().trim()));
+        return map;
+    }
+
+    // 通用工具方法
+    private String getString(Map<String, Object> map, String key) {
+        return Optional.ofNullable(map.get(key)).map(Object::toString).orElse("");
+    }
+
+    public ResultInfo importUser(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            log.error("上传文件不能为空", new RuntimeException("上传文件不能为空"));
+            return ResultInfo.error("上传文件不能为空");
+        }
+        try (ExcelReader reader = ExcelUtil.getReader(file.getInputStream())) {
+            List<Map<String, Object>> readAll = reader.readAll().stream().map(this::trimAllValues).collect(Collectors.toList());
+            if (CollUtil.isEmpty(readAll)) {
+                throw new RuntimeException("导入的数据为空");
+            }
+
+            // 部门
+            Map<String, Integer> sysDepartmentMap = new HashMap<>();
+            sysOrgDeptMapper.selectList(Wrappers.<SysOrgDept>lambdaQuery().eq(SysOrgDept::getIsDel, G.ISDEL_NO)).forEach(sysOrgDept -> {
+                sysDepartmentMap.put(sysOrgDept.getDeptName(), sysOrgDept.getId());
+            });
+            // 角色
+            Map<String, Integer> sysRoleMap = new HashMap<>();
+            sysRoleMapper.selectList(Wrappers.<SysRole>lambdaQuery().eq(SysRole::getIsDel, G.ISDEL_NO)).forEach(sysRole -> {
+                sysRoleMap.put(sysRole.getRoleName(), sysRole.getId());
+            });
+            // 状态
+            Map<String, Integer> statusMap = MapUtil.<String, Integer>builder().put("停用", 0).put("启用", 1).map();
+            // 所属单位
+            Map<String, Integer> orgMap = new HashMap<>();
+            sysOrgManageMapper.selectList(Wrappers.<SysOrgManage>lambdaQuery().eq(SysOrgManage::getIsDel, G.ISDEL_NO)).forEach(sysOrgManage -> {
+                orgMap.put(sysOrgManage.getOrgName(), sysOrgManage.getId());
+            });
+
+
+            List<SysUser> list = CollUtil.newArrayList();
+            List<Map<String, Object>> errorList = new ArrayList<>();
+            for (Map<String, Object> map : readAll) {
+                // 行号
+                map.put("rowNum", readAll.indexOf(map) + 2);
+
+                SysUser bean = new SysUser();
+
+                // 错误集合
+                List<String> errList = CollUtil.newArrayList();
+
+                // 用户名称
+                String readName = getString(map, "用户名称");
+                if (StrUtil.isBlank(readName)) {
+                    map.put("用户名称tip", "用户名称不能为空 ");
+                    errList.add("用户名称不能为空 ");
+                } else {
+                    bean.setRealName(readName);
+                }
+
+                // 联系方式
+                String readPhone = getString(map, "联系方式");
+                bean.setPhone(readPhone);
+
+                // 登录名称
+                String readLoginName = getString(map, "登录名称");
+                if (StrUtil.isBlank(readLoginName)) {
+                    map.put("登录名称tip", "登录名称不能为空 ");
+                    errList.add("登录名称不能为空 ");
+                } else {
+                    // 验证登录名是否存在
+                    SysUser sysUser = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getIsDel, 0)
+                            .eq(SysUser::getLoginName, readLoginName)
+                    );
+                    if (sysUser != null) {
+                        map.put("登录名称tip", "登录名称已存在 ");
+                        errList.add("登录名称已存在 ");
+                    } else {
+                        bean.setLoginName(readLoginName);
+                    }
+                }
+
+                // 用户密码
+                String readPassword = getString(map, "用户密码");
+                if (StrUtil.isBlank(readPassword)) {
+                    map.put("用户密码tip", "用户密码不能为空 ");
+                    errList.add("用户密码不能为空 ");
+                } else {
+                    bean.setPassword(MD5Utils.getMD5(G.PLATFORM + readPassword));
+                }
+
+                // 用户状态
+                String readStatus = getString(map, "用户状态");
+                if (StrUtil.isBlank(readStatus)) {
+                    map.put("用户状态tip", "用户状态不能为空 ");
+                    errList.add("用户状态不能为空 ");
+                } else {
+                    bean.setIsEnable(statusMap.get(readStatus));
+                }
+
+                // 所属单位
+                String readOrg = getString(map, "所属单位");
+                if (StrUtil.isBlank(readOrg)) {
+                    map.put("所属单位tip", "所属单位不能为空 ");
+                    errList.add("所属单位不能为空 ");
+                } else {
+                    bean.setUnitId(orgMap.get(readOrg));
+                }
+
+                // 所属部门
+                String readDept = getString(map, "所属部门");
+                if (StrUtil.isBlank(readDept)) {
+                    map.put("所属部门tip", "所属部门不能为空 ");
+                    errList.add("所属部门不能为空 ");
+                } else {
+                    bean.setDeptId(sysDepartmentMap.get(readDept));
+                }
+
+                // 用户角色
+                String readRole = getString(map, "用户角色");
+                if (StrUtil.isBlank(readRole)) {
+                    map.put("用户角色tip", "用户角色不能为空 ");
+                    errList.add("用户角色不能为空 ");
+                } else {
+                    bean.setRoleId(sysRoleMap.get(readRole));
+                }
+
+                // 备注
+                String readRemark = getString(map, "备注");
+                bean.setMemo(readRemark);
+
+                if (CollectionUtils.isEmpty(errList)) {
+                    bean.setCreateTime(new Date());
+                    bean.setUpdateTime(new Date());
+                    bean.setIsDel(G.ISDEL_NO);
+                    bean.setNameSpelling(Optional.ofNullable(bean.getRealName()).map(SysUserService::toPinyin).orElse(""));
+
+//                    if (save(user)) {
+//                        return userRoleService.updateUserRole(user);
+//                    }
+                    list.add(bean);
+                } else {
+                    map.put("error", errList);
+                    errorList.add(map);
+                }
+            }
+            if (!CollectionUtils.isEmpty(errorList)) {
+                ResultInfo resultInfo = ResultInfo.error("导入失败");
+                resultInfo.setData(errorList);
+                return resultInfo;
+            }
+
+//            mybatisBatchUtils.batchUpdateOrInsert(list, SysUserMapper.class, (item, mapper) -> mapper.insert(item));
+//            mybatisBatchUtils.batchUpdateOrInsert(inventoryDetails, InventoryDetailMapper.class,  (item, uiConfigDetailMapper) -> uiConfigDetailMapper.insert(item));
+            for (SysUser bean : list) {
+                if (save(bean)) {
+                    userRoleService.updateUserRole(bean);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            log.error("导入失败: ", e);
+            return ResultInfo.error("导入失败: " + e.getMessage());
+        }
+        return ResultInfo.success();
     }
 }

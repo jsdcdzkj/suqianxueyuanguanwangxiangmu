@@ -47,7 +47,7 @@ export const openStatus = (id: string | number) =>
 
 // 根据所属区域Id获取所有设备
 export const selectRegionByDevice = (data: Object) =>
-	request.post(`"/missionItemRecord/selectRegionByDevice.do?areaId=" + ${data.data} + "&type=" + ${data.type}`, {});
+	request.post("/missionItemRecord/selectRegionByDevice.do?areaId=" + data.data + "&type=" + data.type, {});
 
 // 查询所有区域
 export const selectAreaList = (data: any) => request.post("/missionItemRecord/selectAreaList.do", data);
@@ -61,7 +61,7 @@ export const exportAssignExcel = (data: any) =>
 
 // 下载excel
 export const missionExcel = (data: any) =>
-	request.get("/mission/missionExcel", {params:data,responseType: "blob"});
+	request.post("/mission/missionExcel", data,{responseType: "blob"});
 
 // 上传图片
 export const uploadAssignFile = (data: any) => request.post("/mission/uploadAssignFile.do", data);

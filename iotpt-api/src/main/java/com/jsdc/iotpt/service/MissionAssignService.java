@@ -96,7 +96,7 @@ public class MissionAssignService extends BaseService<MissionAssign> {
             List<SysUserRole> sysUserRoles = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getIsDel, 0).eq(SysUserRole::getUserId, groupUser.getUserId()).eq(SysUserRole::getRoleId, "40207"));
             if (CollUtil.isNotEmpty(sysUserRoles)) {
                 msgVo.setUserIdList(sysUserRoles.stream().map(SysUserRole::getUserId).collect(Collectors.toList()));
-                appPushMsgService.pushMsg(msgVo);
+//                appPushMsgService.pushMsg(msgVo);
             }
         }
         return save(bean);
@@ -235,7 +235,7 @@ public class MissionAssignService extends BaseService<MissionAssign> {
             List<SysUserRole> sysUserRoles = userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getIsDel, 0).eq(SysUserRole::getUserId, groupUser.getUserId()).eq(SysUserRole::getRoleId, "40207"));
             if (CollUtil.isNotEmpty(sysUserRoles)) {
                 msgVo.setUserIdList(sysUserRoles.stream().map(SysUserRole::getUserId).collect(Collectors.toList()));
-                appPushMsgService.pushMsg(msgVo);
+//                appPushMsgService.pushMsg(msgVo);
             }
         }
         return save(bean);

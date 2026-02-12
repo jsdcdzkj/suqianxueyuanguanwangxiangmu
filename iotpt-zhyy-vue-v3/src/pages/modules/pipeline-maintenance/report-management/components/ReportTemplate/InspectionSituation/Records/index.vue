@@ -66,7 +66,7 @@
                 align="center"
             >
                 <template #default="scope">
-                    {{ (currentPage - 1) * pageSize + scope.$index + 1 }}
+                    {{ (currentPage - 1) * pageSize + $index + 1 }}
                 </template>
             </el-table-column>
             <el-table-column 
@@ -252,11 +252,13 @@ import {
 } from "vue";
 import type { 
     ComponentInternalInstance, 
-    ComputedRef 
+    ComputedRef,
+    Ref 
 } from "vue";
 import type { 
     TableColumnCtx, 
-    TableRowClassName
+    TableRowClassName,
+    SortProps 
 } from "element-plus";
 import { 
     Warning, 
@@ -334,7 +336,8 @@ export default defineComponent({
         CircleCheck,
         Clock,
         Calendar,
-        Timer
+        Timer,
+        Title
     },
     props: {
         // 是否显示统计卡片
@@ -388,8 +391,6 @@ export default defineComponent({
         const pageSize = ref<number>(props.defaultPageSize);
         const totalItems = ref<number>(0);
         const refreshTimer = ref<NodeJS.Timeout | null>(null);
-        
-        // 响应式数据
         const dataInfo = ref<DataInfo>({
             errorTaskTotal: 2,
             yErrorTaskTotal: 1,
@@ -619,7 +620,7 @@ export default defineComponent({
                 const instance = getCurrentInstance() as ComponentInternalInstance;
                 const mixinData = instance?.proxy as unknown as CommonMixinData;
                 
-                if (!mixinData.areaIds || mixinData.areaIds.length === 0) {
+                if (!mixinData.areaIds?.length) {
                     return;
                 }
                 
@@ -631,9 +632,9 @@ export default defineComponent({
                     splType: mixinData.type
                 }) as TaskErrorInfoResponse;
                 
-                if (response.data) {
-                    dataInfo.value = response.data;
-                    totalItems.value = response.data.allErrorTask?.length || 0;
+                if (response) {
+                    dataInfo.value = response;
+                    totalItems.value = response.allErrorTask?.length || 0;
                 }
             } catch (error) {
                 console.error('Failed to load task error info:', error);

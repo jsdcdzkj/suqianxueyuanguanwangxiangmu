@@ -4,8 +4,8 @@
 		<div class="type" :class="{activeType: activeType == 'processInfo'}" @click="activeType = 'processInfo'">流程节点</div>
 	</div>
 	<div class="detail-content">
-		<BaseInfo v-if="activeType === 'baseInfo'" :row="row" />
-		<ProcessInfo v-else :row="row" />
+		<BaseInfo v-if="activeType === 'baseInfo'" :id="props.id" />
+		<ProcessInfo v-else  :id="props.id" />
 	</div>
 </template>
 
@@ -14,50 +14,23 @@ import { ref } from "vue";
 import { number } from "vue-types";
 import ProcessInfo from "./processInfo.vue";
 import BaseInfo from "./baseInfo.vue";
+import { inspectionData } from "@/api/pipeline-maintenance/work-order";
 import { ElDescriptions, ElDescriptionsItem,ElPagination, ElTable, ElTableColumn, ElButton } from "element-plus";
 
 const props = defineProps({
 	id: number().def(),
-	projectId: {
-		type: Number,
-		default: 0
-	},
-	row: {
-		type: Object,
-		default: {}
-	}
 });
 
 const activeType = ref('baseInfo');
-const list = ref([{}]);
-// 分页相关数据
-const currentPage = ref(1); // 当前页码
-const pageSize = ref(10); // 每页显示数量
-const total = ref(0); // 总数据量
-
-const fetchData = () => {
-	// 调用获取数据的接口，将结果赋值给 list.value
-};
-// 页码改变事件处理函数
-const handleCurrentChange = (page: number) => {
-	currentPage.value = page;
-	fetchData();
-};
-
-// 每页显示数量改变事件处理函数
-const handleSizeChange = (size: number) => {
-	pageSize.value = size;
-	currentPage.value = 1; // 重置页码为第一页
-	fetchData();
-};
 
 const detail = ref({});
 // 详情页数据
-if (props.id) {
-	// getEntityOperation(props.id).then((res) => {
-	// 	detail.value = res
-	// });
-}
+// if (props.id) {
+// 	inspectionData({missionId: props.id, isHandle: 1}).then((res) => {
+// 		console.log('详情页数据', res)
+// 		detail.value = res
+// 	});
+// }
 </script>
 <style lang="scss" scoped>
 :deep(.my-label) {

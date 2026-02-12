@@ -38,6 +38,9 @@ export default defineComponent({
     cname: "信号告警排行TOP10",
     name: "RankingChart",
     mixins: [Common] as any,
+    components: {
+        Title
+    },
     props: {
         className: {
             type: String as PropType<string>,
@@ -70,16 +73,21 @@ export default defineComponent({
         ]);
         const rankNum = ref<number[]>([3, 2, 4, 8, 8]);
 
-        // 监听 valdata 变化
+        // 监听 valdata 变化 - 修改此处
         watch(() => props.valdata, (newVal) => {
             if (newVal && Object.keys(newVal).length > 0) {
-                initChart();
+                nextTick(() => {  // 添加nextTick确保DOM更新完成
+                    loadData();  // 改为调用loadData而非直接initChart
+                });
             }
         }, { deep: true });
 
-        // 初始化图表
+        // 初始化图表 - 修改此处
         const initChart = () => {
-            if (!chartEl.value) return;
+            if (!chartEl.value) {
+                console.error('图表容器元素不存在');
+                return;
+            }
             
             // 如果图表已存在，先销毁
             if (chart.value) {
@@ -192,7 +200,7 @@ export default defineComponent({
             };
         };
 
-        // 加载数据
+        // 加载数据 - 修改此处
         const loadData = async () => {
             try {
                 // 从 mixin 中获取数据（通过组件实例）
@@ -202,27 +210,43 @@ export default defineComponent({
                 const mixinData = componentInstance.proxy as unknown as CommonMixin;
                 const { areaIds, startTime, endTime } = mixinData;
                 
-                if (areaIds && areaIds.length > 0) {
-                    const res = await getWarningSignStat({
-                        startTime,
-                        endTime,
-                        areaIds,
-                    });
-                    
-                    if (res.data && Array.isArray(res.data)) {
-                        rankName.value = res.data.map((item: WarningSignItem) => item.NAME);
-                        rankNum.value = res.data.map((item: WarningSignItem) => Number(item.VALUE));
-                    }
+                // 检查必要参数是否存在
+                if (!areaIds || areaIds.length === 0) {
+                    console.warn('区域ID为空，无法加载数据');
+                    initChart(); // 使用默认数据
+                    return;
                 }
                 
-                initChart();
+                if (!startTime || !endTime) {
+                    console.warn('时间范围不完整，无法加载数据');
+                    initChart(); // 使用默认数据
+                    return;
+                }
+                
+                const res = await getWarningSignStat({
+                    startTime,
+                    endTime,
+                    areaIds,
+                });
+                
+                if (res.data && Array.isArray(res.data)) {
+                    rankName.value = res.data.map((item: WarningSignItem) => item.NAME);
+                    rankNum.value = res.data.map((item: WarningSignItem) => Number(item.VALUE));
+                }
+                
+                // 确保在数据更新后初始化图表
+                nextTick(() => {
+                    initChart();
+                });
             } catch (error) {
                 console.error('加载信号告警排行数据失败:', error);
-                initChart(); // 使用默认数据
+                nextTick(() => {
+                    initChart(); // 使用默认数据
+                });
             }
         };
 
-        // 组件挂载
+        // 组件挂载 - 修改此处
         onMounted(() => {
             nextTick(() => {
                 loadData();

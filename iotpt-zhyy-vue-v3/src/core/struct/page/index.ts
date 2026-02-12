@@ -21,6 +21,7 @@ export type FormItemType =
 	| "ElButton"
 	| "ElInput"
 	| "ElSelect"
+	| "ElTreeSelect"
 	| "ElRadioGroup"
 	| "ElSwitch"
 	| "ElCascader"

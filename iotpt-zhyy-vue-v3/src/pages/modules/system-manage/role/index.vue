@@ -1,26 +1,17 @@
 <template>
 	<BasePage v-bind="page">
 		<template #pageTableCell="{ column, row }">
-			<template v-if="column.columnKey === 'status'">
-				<ElTag :type="row.status == 0 ? 'success' : 'info'">
-					{{ row.status == 0 ? "启用" : "禁用" }}
-				</ElTag>
+			<template v-if="column.columnKey === 'systemId'">
+				<span v-text="selectDictLabel(systematicType, row.systemId)"></span>
 			</template>
 		</template>
-		<template #pageTableHeader="{ column }">
-			<template v-if="column.columnKey === 'username5'">
-				<div class="color-red">
-					<el-tooltip class="box-item" effect="dark" content="111" placement="top">
-						{{ column.label }}
-					</el-tooltip>
-				</div>
-			</template>
-		</template>
+
 		<template #pageSearch></template>
 	</BasePage>
 </template>
 
 <script setup lang="tsx">
+	import { ref, onMounted } from "vue";
 	import { createModelAsync, createDrawerAsync } from "@/core/dialog";
 	import { type FormConfig } from "@/core/struct/form/use-base-form";
 	import { usePage } from "@/core/struct/page";
@@ -28,8 +19,38 @@
 	import Detail from "./dialog/detail.vue";
 	import { markRaw } from "vue";
 	import { Plus } from "@element-plus/icons-vue";
-	import { getList, delUser } from "@/api/setting/user";
-	import { ElMessageBox, ElTooltip, type Action } from "element-plus";
+	import { getPageList, doDelete, getRoleUser } from "@/api/setting/role";
+	import { getDictByKey } from "@/api/setting/sysDict";
+	import { ElMessageBox, ElTooltip, type Action, ElMessage } from "element-plus";
+
+	const systematicType = ref([]);
+
+	const getSystematicType = async () => {
+		try {
+			const res = await getDictByKey();
+			const systematicData = res?.systematic_type;
+
+			systematicType.value = systematicData
+				? Object.values(systematicData).map((item) => ({
+						value: item.dictValue,
+						label: item.dictLabel
+					}))
+				: [];
+		} catch (error) {
+			console.error("获取系统类型失败:", error);
+		}
+	};
+
+	// 在组件挂载时调用
+	onMounted(() => {
+		getSystematicType();
+	});
+
+	const selectDictLabel = (dictList: any[], value: string) => {
+		if (!dictList?.length || !value) return value;
+		const item = dictList.find((item) => String(item.value) === String(value));
+		return item ? item.label : value;
+	};
 
 	const formConfig: FormConfig = {
 		span: 3,
@@ -41,7 +62,7 @@
 			{
 				type: "ElSelect",
 				value: "",
-				prop: "markResult",
+				prop: "systemId",
 				attrs: {
 					placeholder: "所属系统",
 					clearable: true
@@ -49,24 +70,15 @@
 				select: {
 					type: "ElOption",
 					label: "label",
-					value: "id",
-					list: [
-						{
-							label: "区域1",
-							id: "0"
-						},
-						{
-							label: "区域2",
-							id: "1"
-						}
-					]
+					value: "value",
+					list: systematicType
 				}
 			},
 			{
 				type: "ElInput",
 				value: "",
 				label: "",
-				prop: "username",
+				prop: "roleName",
 				attrs: {
 					placeholder: "角色名称",
 					clearable: true,
@@ -81,7 +93,7 @@
 				type: "ElInput",
 				value: "",
 				label: "",
-				prop: "phone",
+				prop: "roleFlag",
 				attrs: {
 					placeholder: "角色标志",
 					clearable: true,
@@ -98,7 +110,7 @@
 	const { page, pageApi } = usePage({
 		formConfig,
 		title: "角色管理",
-		// listApi: getList,
+		listApi: getPageList,
 		toolbar: [
 			{
 				label: "新增",
@@ -115,7 +127,7 @@
 							closeOnPressEscape: false
 						},
 						{},
-						<Detail />
+						<Detail systematicType={systematicType.value} />
 					).then(() => {
 						pageApi.pageList();
 					});
@@ -161,57 +173,42 @@
 					align: "center"
 				},
 				{
-					columnKey: "username5",
+					columnKey: "roleName",
 					label: "角色名称",
-					prop: "label",
+					prop: "roleName",
 					align: "center"
-					// renderHeader(header) {
-					// 	return (
-					// <div class={"color-red"}>
-					// 	<el-tooltip
-					// 		class="box-item"
-					// 		effect="dark"
-					// 		content="Top Center prompts info"
-					// 		placement="top"
-					// 	>
-					// 		{header.column.label}
-					// 	</el-tooltip>
-					// </div>
-					// 	);
-					// }
 				},
 				{
-					columnKey: "username",
+					columnKey: "roleFlag",
 					label: "角色标志",
-					prop: "username",
-					align: "center",
-					width: "120px"
-				},
-				{
-					columnKey: "phone",
-					label: "所属系统",
-					prop: "phone",
+					prop: "roleFlag",
 					align: "center"
 				},
 				{
-					columnKey: "realName",
+					columnKey: "systemId",
+					label: "所属系统",
+					prop: "systemId",
+					align: "center"
+				},
+				{
+					columnKey: "updateUserName",
 					label: "修改人",
-					prop: "realName",
+					prop: "updateUserName",
 					align: "center",
 					width: "120px"
 				},
 				{
-					columnKey: "workId",
+					columnKey: "updateTime",
 					label: "修改时间",
-					prop: "workId",
+					prop: "updateTime",
 					align: "center",
 					width: "180px"
 				},
 
 				{
-					columnKey: "workId",
+					columnKey: "memo",
 					label: "备注",
-					prop: "workId",
+					prop: "memo",
 					align: "center"
 				},
 				{
@@ -228,7 +225,7 @@
 					type: "primary",
 					size: "small",
 					plain: true,
-					onClick: async ({ row }) => {
+					onClick: async (row: any) => {
 						createModelAsync(
 							{
 								title: "编辑",
@@ -238,7 +235,7 @@
 								closeOnPressEscape: false
 							},
 							{},
-							<Detail rowInfo={row} />
+							<Detail rowInfo={row} systematicType={systematicType.value} />
 						).then(() => {
 							pageApi.pageList();
 						});
@@ -250,20 +247,49 @@
 					plain: true,
 					danger: true,
 					type: "danger",
-					onClick: ({ row }) => {
-						ElMessageBox.alert("是否删除该条数据", "提示", {
-							confirmButtonText: "确认",
-							callback: (action: Action) => {
-								if (action == "confirm") {
-									delUser(row.id).then(() => {
-										pageApi.pageList();
-									});
-								}
-							}
-						});
+					show: (row: any) => !["zhyyadmin", "yyadmin"].includes(row.roleFlag),
+					onClick: (row: any) => {
+						handleDelete(row);
 					}
 				}
 			]
 		}
 	});
+	const handleDelete = async (row: any) => {
+		if (!row.id) {
+			ElMessage.warning("请选择要删除的项");
+			return;
+		}
+
+		try {
+			// 查询角色下面的用户
+			const res = await getRoleUser({ role_id: row.id });
+			if (res.data?.length > 0) {
+				const userNames = res.data.map((item) => item.realName).join("、");
+				ElMessage.error(`该角色下面有用户(${userNames})，不能删除！`);
+				return;
+			}
+
+			// 确认删除
+			await ElMessageBox.confirm("你确定要删除当前项吗", "提示", {
+				confirmButtonText: "确认",
+				cancelButtonText: "取消",
+				type: "warning"
+			});
+
+			// 执行删除
+			await doDelete({ id: row.id });
+
+			// 如果当前页只有一条数据且不是第一页，则回到上一页
+			if (page.pagination?.total === 1 && page.pagination.currentPage > 1) {
+				page.pagination.currentPage--;
+			}
+
+			pageApi.pageList();
+		} catch (error) {
+			if (error !== "cancel") {
+				ElMessage.error("删除失败");
+			}
+		}
+	};
 </script>

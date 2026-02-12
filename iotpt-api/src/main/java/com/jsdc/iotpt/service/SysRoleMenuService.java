@@ -50,17 +50,27 @@ public class SysRoleMenuService extends BaseService<SysRoleMenu> {
                 continue;
             }
             if (null != a.getParentId() && !menuIds.contains(a.getParentId())){
+                LambdaQueryWrapper<SysRoleMenu> parentWrapper = new LambdaQueryWrapper<>();
+                parentWrapper.eq(SysRoleMenu::getRoleId, role.getId());
+                parentWrapper.eq(SysRoleMenu::getMenuId, a.getParentId());
+                if (mapper.selectCount(parentWrapper) == 0) {
+                    SysRoleMenu roleMenu = new SysRoleMenu();
+                    roleMenu.setMenuId(a.getParentId());
+                    roleMenu.setRoleId(role.getId());
+                    roleMenu.setIsDel(G.ISDEL_NO);
+                    roleMenu.insert();
+                }
+            }
+            LambdaQueryWrapper<SysRoleMenu> currentWrapper = new LambdaQueryWrapper<>();
+            currentWrapper.eq(SysRoleMenu::getRoleId, role.getId());
+            currentWrapper.eq(SysRoleMenu::getMenuId, menuId);
+            if (mapper.selectCount(currentWrapper) == 0) {
                 SysRoleMenu roleMenu = new SysRoleMenu();
-                roleMenu.setMenuId(a.getParentId());
+                roleMenu.setMenuId(menuId);
                 roleMenu.setRoleId(role.getId());
                 roleMenu.setIsDel(G.ISDEL_NO);
                 roleMenu.insert();
             }
-            SysRoleMenu roleMenu = new SysRoleMenu();
-            roleMenu.setMenuId(menuId);
-            roleMenu.setRoleId(role.getId());
-            roleMenu.setIsDel(G.ISDEL_NO);
-            roleMenu.insert();
         }
         return true;
     }

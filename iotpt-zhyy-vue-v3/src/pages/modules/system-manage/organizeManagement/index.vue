@@ -8,7 +8,8 @@
 					</template>
 					<div class="block">
 						<ElTree
-							:data="data"
+							ref="treeRef"
+							:data="dataDeptTree"
 							:props="treeProps"
 							node-key="id"
 							default-expand-all
@@ -91,24 +92,78 @@
 										</span>
 									</div>
 									<span class="right-edit-con" v-if="node.data.type === '0'">
-										<ElButton type="success" link @click.stop="() => plus(node, data)">
+										<ElButton
+											type="success"
+											link
+											@click.stop="
+												() => {
+													treeRef.value?.setCurrentKey(node.data.id);
+													plus(node, data);
+												}
+											"
+										>
 											<ElIcon><Plus /></ElIcon>
 										</ElButton>
-										<ElButton type="primary" link @click.stop="() => editTree(data)">
+										<ElButton
+											type="primary"
+											link
+											@click.stop="
+												() => {
+													treeRef.value?.setCurrentKey(node.data.id);
+													editTree(data);
+												}
+											"
+										>
 											<ElIcon><Edit /></ElIcon>
 										</ElButton>
-										<ElButton type="danger" link @click.stop="() => remove(node, data)">
+										<ElButton
+											type="danger"
+											link
+											@click.stop="
+												() => {
+													treeRef.value?.setCurrentKey(node.data.id);
+													remove(node, data);
+												}
+											"
+										>
 											<ElIcon><Delete /></ElIcon>
 										</ElButton>
 									</span>
 									<span class="right-edit-con" v-else>
-										<ElButton type="success" link @click.stop="() => plus(node, data)">
+										<ElButton
+											type="success"
+											link
+											@click.stop="
+												() => {
+													treeRef.value?.setCurrentKey(node.data.id);
+													plus(node, data);
+												}
+											"
+										>
 											<ElIcon><Plus /></ElIcon>
 										</ElButton>
-										<ElButton type="primary" link @click.stop="() => editTree(data)">
+										<ElButton
+											type="primary"
+											link
+											@click.stop="
+												() => {
+													treeRef.value?.setCurrentKey(node.data.id);
+													editTree(data);
+												}
+											"
+										>
 											<ElIcon><Edit /></ElIcon>
 										</ElButton>
-										<ElButton type="danger" link @click.stop="() => remove(node, data)">
+										<ElButton
+											type="danger"
+											link
+											@click.stop="
+												() => {
+													treeRef.value?.setCurrentKey(node.data.id);
+													remove(node, data);
+												}
+											"
+										>
 											<ElIcon><Delete /></ElIcon>
 										</ElButton>
 									</span>
@@ -161,7 +216,7 @@
 							<!-- 表格 -->
 							<ElTable
 								v-loading="listLoading"
-								:data="list"
+								:data="listTable"
 								:element-loading-text="elementLoadingText"
 								height="calc(100vh - 278px)"
 								border
@@ -187,24 +242,12 @@
 									min-width="120"
 									align="center"
 								/>
-								<ElTableColumn label="操作" width="160" align="center">
+								<ElTableColumn label="操作" width="140" align="center">
 									<template #default="{ row }">
-										<ElButton
-											icon="Edit"
-											type="success"
-											size="small"
-											plain
-											@click="handleEdit(row)"
-										>
+										<ElButton type="primary" text size="small" @click="handleEdit(row)">
 											编辑
 										</ElButton>
-										<ElButton
-											icon="Delete"
-											type="danger"
-											size="small"
-											plain
-											@click="handleDelete(row)"
-										>
+										<ElButton type="danger" text size="small" @click="handleDelete(row)">
 											删除
 										</ElButton>
 									</template>
@@ -232,7 +275,7 @@
 								单位信息
 							</template>
 							<div class="tab-second-box">
-								<ElForm ref="form" :model="form" :rules="rules" label-width="88px">
+								<ElForm ref="formInstance" :model="form" :rules="rules" label-width="88px">
 									<ElFormItem label="单位名称" prop="orgName">
 										<ElInput
 											v-model.trim="form.orgName"
@@ -275,6 +318,15 @@
 											style="width: 400px"
 										/>
 									</ElFormItem>
+									<ElFormItem label="邮箱地址" prop="email">
+										<ElInput
+											v-model.trim="form.email"
+											:disabled="msgStatus"
+											:placeholder="msgStatus ? '' : '请输入邮箱地址'"
+											autocomplete="off"
+											style="width: 400px"
+										/>
+									</ElFormItem>
 									<ElFormItem label="备注信息">
 										<ElInput
 											v-model.trim="form.memo"
@@ -313,8 +365,8 @@
 											style="margin-left: 10px"
 											@click="save"
 											:loading="loading"
-											:disabled="disabled"
-											:icon="Plus"
+											:disabled="loading"
+											:icon="Check"
 										>
 											{{ loading ? "确定中 ..." : "添 加" }}
 										</ElButton>
@@ -379,7 +431,7 @@
 	import StructureCard from "@/components/card/StructureCard";
 	// 响应式数据
 	const loading = ref(false);
-	const data = ref([]);
+	const dataDeptTree = ref([]);
 	const treeProps = {
 		label: "orgName",
 		value: "id"
@@ -391,21 +443,24 @@
 		address: "",
 		manager: "",
 		phone: "",
+		email: "",
 		memo: "",
 		parentId: "",
 		id: ""
 	});
+	const currentNodeKey = ref("");
 
 	const rules = reactive({
 		orgName: [{ required: true, trigger: "blur", message: "请输入单位名称" }]
 	});
 
 	const activeType = ref("0");
-	const msgStatus = ref(true);
+	const msgStatus = ref(false);
+
 	const activeName = ref("first");
 	const iconType = ref("0");
 
-	const list = ref(null);
+	const listTable = ref(null);
 	const listLoading = ref(false);
 	const total = ref(0);
 	const elementLoadingText = ref("正在加载...");
@@ -433,52 +488,113 @@
 
 	// 方法定义
 
-	const editTree = (treeData) => {
-		createModelAsync(
-			{
-				title: "编辑单位",
-				showNext: false,
-				width: "720px",
-				closeOnClickModal: false,
-				closeOnPressEscape: false
-			},
-			{},
-			<Detail rowInfo={treeData} />
-		).then((res) => {
-			if (res) {
-				ElMessage.success("编辑成功");
-				treeData();
-			}
-		});
+	// const editTree = (treeData) => {
+	// 	createModelAsync(
+	// 		{
+	// 			title: "编辑单位",
+	// 			showNext: false,
+	// 			width: "720px",
+	// 			closeOnClickModal: false,
+	// 			closeOnPressEscape: false
+	// 		},
+	// 		{},
+	// 		<Detail rowInfo={treeData} />
+	// 	).then((res) => {
+	// 		if (res) {
+	// 			ElMessage.success("编辑成功");
+	// 			treeData();
+	// 		}
+	// 	});
+	// };
+
+	const editTree = async (node) => {
+		formInstance.value?.clearValidate();
+		activeType.value = "0";
+		activeName.value = "second";
+		msgStatus.value = false;
+
+		try {
+			const res = await info(node.id);
+			Object.assign(form, {
+				orgName: res.orgName,
+				isItATenant: res.isItATenant || "0",
+				address: res.address,
+				manager: res.manager,
+				phone: res.phone,
+				email: res.email || "",
+				memo: res.memo,
+				parentId: res.parentId,
+				id: res.id
+			});
+		} catch (error) {
+			ElMessage.error("获取信息失败");
+		}
 	};
 
-	const plus = (node, treeData) => {
-		createModelAsync(
-			{
-				title: "新增下级单位",
-				showNext: false,
-				width: "720px",
-				closeOnClickModal: false,
-				closeOnPressEscape: false
-			},
-			{},
-			<Detail rowInfo={{ parentId: treeData.id }} />
-		).then((res) => {
-			if (res) {
-				ElMessage.success("新增成功");
-				treeData();
-			}
+	// const plus = (node, treeData) => {
+	// 	createModelAsync(
+	// 		{
+	// 			title: "新增下级单位",
+	// 			showNext: false,
+	// 			width: "720px",
+	// 			closeOnClickModal: false,
+	// 			closeOnPressEscape: false
+	// 		},
+	// 		{},
+	// 		<Detail rowInfo={{ parentId: treeData.id }} />
+	// 	).then((res) => {
+	// 		if (res) {
+	// 			ElMessage.success("新增成功");
+	// 			treeData();
+	// 		}
+	// 	});
+	// };
+	const plus = (node, data) => {
+		// 完全重置表单
+		formInstance.value?.resetFields();
+		Object.assign(form, {
+			orgName: "",
+			isItATenant: "0",
+			address: "",
+			manager: "",
+			phone: "",
+			email: "",
+			memo: "",
+			parentId: "", // 先清空
+			id: "" // 清空ID
 		});
+
+		// 设置父级ID
+		form.parentId = "";
+		if (data != undefined) {
+			form.parentId = data.id;
+		}
+
+		activeType.value = "1"; // 设置为新增模式
+		activeName.value = "second";
+		iconType.value = "1";
+		msgStatus.value = false; // 设置为可编辑状态
 	};
 
 	const plus2 = () => {
-		reseat();
-		form.parentId = "";
-		console.log(form.parentId);
-		activeType.value = "1";
+		// 完全重置表单
+		formInstance.value?.resetFields();
+		Object.assign(form, {
+			orgName: "",
+			isItATenant: "0",
+			address: "",
+			manager: "",
+			phone: "",
+			email: "",
+			memo: "",
+			parentId: "",
+			id: "" // 清空ID
+		});
+
+		activeType.value = "1"; // 设置为新增模式
 		activeName.value = "second";
 		iconType.value = "0";
-		msgStatus.value = false;
+		msgStatus.value = false; // 设置为可编辑状态
 	};
 
 	const remove = (node, treeData) => {
@@ -495,47 +611,48 @@
 		});
 	};
 
-	const nodeClick = (item, treeData) => {
-		queryForm.deptName = "";
-		reseat3();
-		heightTable.value = "calc(100vh - 522px)";
-		msgStatus.value = true;
-		activeType.value = "0";
-		activeName.value = "first";
-		form.parentId = item.id;
+	const nodeClick = async (item, treeData) => {
+		try {
+			queryForm.deptName = "";
+			reseat3();
+			heightTable.value = "calc(100vh - 522px)";
+			msgStatus.value = true; // 设置为只读状态
+			activeType.value = "0";
+			activeName.value = "first";
+			form.parentId = item.id;
 
-		asyncObj.orgId = item.id;
-		asyncObj.iccId = item.iccId;
-		if (item.parentId != 0) {
-			iconType.value = "1";
-		} else {
-			iconType.value = "0";
-		}
-		info(item.id).then((res) => {
-			if (res.code == 0) {
-				Object.assign(form, res.data);
-				fetchData();
+			// 确保树形组件选中当前节点
+			if (treeRef.value) {
+				treeRef.value.setCurrentKey(item.id);
 			}
-		});
+
+			asyncObj.orgId = item.id;
+			asyncObj.iccId = item.iccId;
+			iconType.value = item.parentId !== 0 ? "1" : "0";
+
+			const res = await info(item.id);
+			Object.assign(form, res);
+			await fetchData();
+		} catch (error) {
+			ElMessage.error("获取信息失败");
+		}
 	};
 
 	const handleEdit = (row) => {
-		if (form.id) {
+		if (asyncObj.orgId) {
+			// 有 form.id 时，传递给弹窗进行编辑
 			createModelAsync(
 				{
-					title: "编辑部门",
+					title: row?.id ? "编辑部门" : "新增部门",
 					showNext: false,
 					width: "720px",
 					closeOnClickModal: false,
 					closeOnPressEscape: false
 				},
 				{},
-				<Detail rowInfo={row} />
+				<Detail rowInfo={row || {}} orgId={asyncObj.orgId} />
 			).then((res) => {
-				if (res) {
-					ElMessage.success("编辑成功");
-					fetchData();
-				}
+				fetchData();
 			});
 		} else {
 			ElMessage.error("请先在左侧选中单位！");
@@ -549,19 +666,16 @@
 				cancelButtonText: "取消",
 				type: "warning"
 			}).then(async () => {
-				const res = await delOrgDept(row.id);
-				if (res.code == 0) {
-					ElMessage.success("删除成功");
-					fetchData();
-				}
+				await delOrgDept(row.id);
+				fetchData();
 			});
 		}
 	};
 
 	const fetchData = async () => {
-		if (form.id) {
+		if (asyncObj.orgId) {
 			listLoading.value = true;
-			queryForm.orgId = form.id;
+			queryForm.orgId = asyncObj.orgId;
 			checkDatas.value = [];
 			const checkedNode = cascaderArr.value.getCheckedNodes();
 
@@ -574,12 +688,11 @@
 			}
 			queryForm.ids = checkDatas.value.toString();
 
-			const res = await selectOrgDeptList(queryForm);
-			if (res.code == 0) {
-				list.value = res.data.records;
-				total.value = res.data.total;
-				listLoading.value = false;
-			}
+			const data = await selectOrgDeptList(queryForm);
+			console.log(data);
+			listTable.value = data.records;
+			total.value = data.total;
+			listLoading.value = false;
 		}
 	};
 
@@ -587,27 +700,35 @@
 		if (loading.value) return;
 
 		try {
-			await formInstance.value.validate();
+			await formInstance.value?.validate();
 			loading.value = true;
 
-			if (activeType.value == "1") {
-				if (form.id == "") {
+			if (activeType.value === "1") {
+				// 新增模式
+				if (!form.id) {
+					// 新增顶级单位
 					const res = await addOrgManage(form);
-					if (res.code == 0) {
-						ElMessage.success("操作成功");
-						treeData();
-						form.id = res.data.id;
-						msgStatus.value = true;
-						activeType.value = "0";
-					}
+					await treeData();
+					form.id = res.id;
+					msgStatus.value = true;
+					activeType.value = "0";
+					await queryData();
 				} else {
-					const res = await updateOrgManage(form);
-					if (res.code == 0) {
-						treeData();
-						msgStatus.value = true;
-						activeType.value = "0";
-					}
+					// 新增下级单位
+					const res = await addOrgManage(form);
+					await treeData();
+					form.id = res.id;
+					msgStatus.value = true;
+					activeType.value = "0";
+					await queryData();
 				}
+			} else {
+				// 编辑模式
+				const res = await updateOrgManage(form);
+				await treeData();
+				msgStatus.value = true;
+				activeType.value = "0";
+				await queryData();
 			}
 		} catch (error) {
 			ElMessage.error("操作失败");
@@ -658,17 +779,14 @@
 	};
 
 	const treeData = async () => {
-		const res = await findOrg();
-		if (res.code == 0) {
-			data.value = res.data;
-		}
+		const data = await findOrg();
+		dataDeptTree.value = data;
+		return data; // 添加返回值
 	};
 
 	const treeData2 = async () => {
-		const res = await areaTreeList();
-		if (res.code == 0) {
-			options.value = res.data;
-		}
+		const data = await areaTreeList();
+		options.value = data;
 	};
 
 	const choseTheme = (subjectValue) => {
@@ -681,25 +799,41 @@
 	};
 
 	// 生命周期钩子
-	onMounted(() => {
-		treeData();
-		treeData2();
+	onMounted(async () => {
+		try {
+			await Promise.all([treeData(), treeData2()]);
 
-		nextTick(() => {
-			setTimeout(() => {
-				if (data.value.length > 0) {
-					form.id = data.value[0].id;
-					info(form.id).then((res) => {
-						if (res.code == 0) {
-							Object.assign(form, res.data);
-							asyncObj.orgId = res.data.id;
-							asyncObj.iccId = res.data.iccId;
-						}
-					});
+			// 等待多次更新确保 DOM 完全渲染
+			await nextTick();
+			await nextTick();
+
+			if (dataDeptTree.value.length > 0) {
+				const firstNode = dataDeptTree.value[0];
+
+				// 使用 treeRef 来设置当前选中节点
+				if (treeRef.value) {
+					treeRef.value.setCurrentKey(firstNode.id);
 				}
-				fetchData();
-			}, 1000);
-		});
+
+				form.id = firstNode.id;
+				currentNodeKey.value = firstNode.id;
+
+				try {
+					const res = await info(firstNode.id);
+					Object.assign(form, res);
+					asyncObj.orgId = res.id;
+					asyncObj.iccId = res.iccId;
+					msgStatus.value = true;
+					activeType.value = "0";
+				} catch (error) {
+					ElMessage.error("获取信息失败");
+				}
+
+				await fetchData();
+			}
+		} catch (error) {
+			ElMessage.error("初始化失败");
+		}
 	});
 </script>
 
@@ -731,9 +865,8 @@
 			right: 0;
 			top: 0;
 			min-width: 40px;
-			padding: 6px 10px;
+			padding: 3px 6px;
 			justify-content: flex-end;
-			background-color: #f5f7fac4;
 			.el-link {
 				font-size: 14px;
 			}
@@ -804,5 +937,8 @@
 	.custom2-table {
 		background: var(--app-card-color);
 		overflow: hidden;
+	}
+	:deep(.el-button + .el-button) {
+		margin-left: 2px;
 	}
 </style>
